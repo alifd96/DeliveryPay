@@ -53,13 +53,6 @@ import {
   Cell
 } from 'recharts';
 import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  onAuthStateChanged, 
-  signOut,
-  User as FirebaseUser
-} from 'firebase/auth';
-import { 
   collection, 
   addDoc, 
   query, 
@@ -73,7 +66,7 @@ import {
   updateDoc,
   getDocFromServer
 } from 'firebase/firestore';
-import { auth, db } from './firebase';
+import { db } from './firebase';
 
 // --- Types ---
 
@@ -109,17 +102,12 @@ const handleFirestoreError = (error: unknown, operationType: OperationType, path
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData.map(provider => ({
-        providerId: provider.providerId,
-        displayName: provider.displayName,
-        email: provider.email,
-        photoUrl: provider.photoURL
-      })) || []
+      userId: 'default-user',
+      email: 'local@user',
+      emailVerified: true,
+      isAnonymous: false,
+      tenantId: null,
+      providerInfo: []
     },
     operationType,
     path
@@ -212,8 +200,8 @@ const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default function App() {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const user = { uid: 'default-user', displayName: 'User' };
+  const [loading, setLoading] = useState(false);
   const [view, setView] = useState<'home' | 'customer' | 'history' | 'add-customer' | 'customer-profile' | 'stats'>('home');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -250,24 +238,10 @@ export default function App() {
       }
     };
     testConnection();
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-    return unsubscribe;
   }, []);
 
-  const handleLogin = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Login failed:", error);
-    }
-  };
-
-  const handleLogout = () => signOut(auth);
+  const handleLogin = async () => {};
+  const handleLogout = () => {};
 
   // --- Data Fetching ---
 
@@ -555,36 +529,6 @@ export default function App() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-6 text-white overflow-hidden relative">
-        <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-emerald-500/20 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-blue-500/20 blur-[120px] rounded-full" />
-        
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md relative z-10"
-        >
-          <div className="bg-gradient-to-br from-emerald-400 to-emerald-600 p-8 rounded-[2.5rem] shadow-2xl shadow-emerald-500/20 mb-10 inline-block">
-            <Wallet size={72} className="text-white" />
-          </div>
-          <h1 className="text-5xl font-black mb-4 tracking-tight">Delivery Pay</h1>
-          <p className="text-slate-400 mb-12 text-xl leading-relaxed">
-            The professional way to track your delivery bills in <span className="text-emerald-400 font-bold">L.L.</span>
-          </p>
-          <button 
-            onClick={handleLogin}
-            className="w-full bg-white text-slate-900 py-5 rounded-[2rem] font-black text-xl shadow-2xl hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center gap-4"
-          >
-            <img src="https://www.google.com/favicon.ico" className="w-6 h-6" alt="Google" />
-            Sign in with Google
-          </button>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans pb-24">
@@ -611,15 +555,10 @@ export default function App() {
                  view === 'customer-profile' ? 'Client Profile' :
                  selectedCustomer?.name}
               </h1>
-              {view === 'home' && <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Welcome, {user.displayName?.split(' ')[0]}</p>}
+              {view === 'home' && <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Welcome back</p>}
             </div>
           </div>
-          <button 
-            onClick={handleLogout}
-            className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
-          >
-            <LogOut size={22} />
-          </button>
+          <div className="w-10 h-10" />
         </header>
 
         <main className="max-w-xl mx-auto p-6">

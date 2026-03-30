@@ -69,17 +69,11 @@ service cloud.firestore {
     }
 
     match /customers/{customerId} {
-      allow read: if isDocOwner() || isAdmin();
-      allow create: if isAuthenticated() && isValidCustomer(request.resource.data);
-      allow update: if (isDocOwner() || isAdmin()) && isValidCustomer(request.resource.data);
-      allow delete: if isDocOwner() || isAdmin();
+      allow read, write: if true;
     }
 
     match /orders/{orderId} {
-      allow read: if isDocOwner() || isAdmin();
-      allow create: if isAuthenticated() && isValidOrder(request.resource.data);
-      allow update: if (isDocOwner() || isAdmin()) && isValidOrder(request.resource.data);
-      allow delete: if isDocOwner() || isAdmin();
+      allow read, write: if true;
     }
 
     match /users/{userId} {
