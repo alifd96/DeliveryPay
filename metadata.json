@@ -1,0 +1,5 @@
+{
+  "name": "Delivery Pay Pro",
+  "description": "Professional delivery bill tracker with customer management, debt tracking, voice-to-text input, and detailed statistics for Lebanese delivery services.",
+  "requestFramePermissions": ["microphone"]
+}

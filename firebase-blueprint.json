@@ -1,0 +1,65 @@
+{
+  "entities": {
+    "Customer": {
+      "title": "Customer",
+      "description": "A customer for delivery services.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "uid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "uid", "createdAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A delivery order consisting of multiple shop items.",
+      "type": "object",
+      "properties": {
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "shop": { "type": "string" },
+              "price": { "type": "number" }
+            }
+          }
+        },
+        "deliveryFee": { "type": "number" },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "delivered", "paid"] },
+        "uid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["customerId", "customerName", "items", "total", "uid", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user profile with roles.",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["admin", "user"] }
+      },
+      "required": ["role"]
+    }
+  },
+  "firestore": {
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Collection of customers."
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Collection of orders."
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of users."
+    }
+  }
+}
