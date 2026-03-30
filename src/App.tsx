@@ -566,9 +566,10 @@ export default function App() {
             {view === 'home' && (
               <motion.div 
                 key="home"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
                 className="space-y-6"
               >
                 {/* Summary Card */}
@@ -622,8 +623,9 @@ export default function App() {
                 <div className="space-y-4">
                   {filteredCustomers.map(customer => (
                     <motion.div
-                      layout
                       key={customer.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                       className="group relative bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between hover:border-emerald-200 hover:shadow-md transition-all overflow-hidden"
                     >
                       <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -728,9 +730,10 @@ export default function App() {
             {view === 'stats' && (
               <motion.div 
                 key="stats"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
                 className="space-y-8"
               >
                 {/* Stats Summary */}
