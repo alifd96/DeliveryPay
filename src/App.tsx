@@ -1046,7 +1046,7 @@ export default function App() {
                     <ArrowLeft size={18} />
                   </button>
                   <div className="text-center">
-                    <h2 className="text-lg font-black text-slate-900 tracking-tight">{selectedCustomer.name}</h2>
+                    <h2 className="text-xl font-black text-slate-900 tracking-tight">{selectedCustomer.name}</h2>
                     <button 
                       onClick={() => {
                         setEditingCustomer(selectedCustomer);
@@ -1057,7 +1057,7 @@ export default function App() {
                         });
                         setView('add-customer');
                       }}
-                      className="text-[10px] font-black text-emerald-500 uppercase tracking-widest hover:underline"
+                      className="text-[12px] font-black text-emerald-500 uppercase tracking-widest hover:underline"
                     >
                       Edit Details
                     </button>
@@ -1089,7 +1089,7 @@ export default function App() {
                         }`}
                       >
                         {cat.icon}
-                        <span className="text-[9px] font-black mt-1 uppercase tracking-tighter">{cat.name}</span>
+                        <span className="text-[11px] font-black mt-1 uppercase tracking-tighter">{cat.name}</span>
                       </button>
                     ))}
                   </div>
@@ -1097,14 +1097,14 @@ export default function App() {
                   {/* Form */}
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Shop</label>
+                      <label className="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-2">Shop</label>
                       <div className="relative">
                         <input 
                           type="text"
                           value={shopName}
                           onChange={(e) => setShopName(e.target.value)}
                           placeholder="Shop Name"
-                          className="w-full bg-slate-50 border-2 border-slate-50 rounded-lg pl-3 pr-8 py-2 text-sm font-black text-slate-900 focus:outline-none focus:border-emerald-500/50 transition-all"
+                          className="w-full bg-slate-50 border-2 border-slate-50 rounded-lg pl-3 pr-8 py-2 text-base font-black text-slate-900 focus:outline-none focus:border-emerald-500/50 transition-all"
                         />
                         <button 
                           onClick={startVoiceCapture}
@@ -1115,14 +1115,14 @@ export default function App() {
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Price</label>
+                      <label className="text-[12px] font-black text-slate-400 uppercase tracking-widest ml-2">Price</label>
                       <input 
                         type="number"
                         inputMode="numeric"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
                         placeholder="0"
-                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-lg px-3 py-2 text-sm font-black text-slate-900 focus:outline-none focus:border-emerald-500/50 transition-all"
+                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-lg px-3 py-2 text-base font-black text-slate-900 focus:outline-none focus:border-emerald-500/50 transition-all"
                       />
                     </div>
                   </div>
@@ -1130,7 +1130,7 @@ export default function App() {
                   <button 
                     onClick={addItemToOrder}
                     disabled={!shopName || !price}
-                    className="w-full bg-slate-900 text-white py-2.5 rounded-xl font-black text-sm shadow-lg shadow-slate-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-30"
+                    className="w-full bg-slate-900 text-white py-2.5 rounded-xl font-black text-base shadow-lg shadow-slate-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-30"
                   >
                     <Plus size={16} strokeWidth={3} />
                     Add Item
@@ -1142,7 +1142,7 @@ export default function App() {
                   <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-center">
                     <div className="flex items-center gap-2 mb-1">
                       <Calculator size={14} className="text-emerald-500" />
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Delivery</span>
+                      <span className="text-[12px] font-black text-slate-400 uppercase tracking-widest">Delivery</span>
                     </div>
                     <div className="relative">
                       <input 
@@ -1151,35 +1151,35 @@ export default function App() {
                         value={deliveryFee}
                         onChange={(e) => setDeliveryFee(e.target.value)}
                         placeholder="0"
-                        className="w-full bg-slate-50 border-none rounded-lg px-2 py-1 text-base font-black text-slate-900 focus:outline-none"
+                        className="w-full bg-slate-50 border-none rounded-lg px-2 py-1 text-lg font-black text-slate-900 focus:outline-none"
                       />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">LL</span>
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[12px] font-black text-slate-300">LL</span>
                     </div>
                   </div>
                   <div className="bg-emerald-500 p-3 rounded-2xl shadow-lg shadow-emerald-500/20 flex flex-col justify-center text-white">
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Live Total</span>
-                    <p className="text-xl font-black leading-none">{formatCurrency(currentInputTotal)}</p>
+                    <span className="text-[12px] font-black uppercase tracking-widest opacity-80 mb-1">Live Total</span>
+                    <p className="text-2xl font-black leading-none">{formatCurrency(currentInputTotal)}</p>
                   </div>
                 </div>
 
                 {/* Current Order Items */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between px-2">
-                    <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Order Items</h3>
+                    <h3 className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Order Items</h3>
                   </div>
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                     {currentItems.map((item, index) => (
                       <div key={index} className="bg-white p-3 rounded-xl border border-slate-100 flex items-center justify-between shadow-sm">
                         <div>
-                          <p className="font-black text-sm text-slate-900">{item.shop}</p>
-                          <p className="text-emerald-500 font-black text-[12px]">{formatCurrency(item.price)}</p>
+                          <p className="font-black text-base text-slate-900">{item.shop}</p>
+                          <p className="text-emerald-500 font-black text-sm">{formatCurrency(item.price)}</p>
                         </div>
                         <button onClick={() => removeItemFromOrder(index)} className="p-2 text-slate-300 hover:text-red-500"><Trash2 size={16} /></button>
                       </div>
                     ))}
                     {currentItems.length === 0 && (
                       <div className="text-center py-4 bg-slate-50/50 rounded-xl border border-dashed border-slate-100">
-                        <p className="text-slate-300 font-black text-[11px] uppercase tracking-widest">No items yet</p>
+                        <p className="text-slate-300 font-black text-[13px] uppercase tracking-widest">No items yet</p>
                       </div>
                     )}
                   </div>
@@ -1188,7 +1188,7 @@ export default function App() {
                 {currentItems.length > 0 && (
                   <button 
                     onClick={submitOrder}
-                    className="w-full bg-emerald-500 text-white py-3 rounded-xl font-black text-sm shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-emerald-500 text-white py-3 rounded-xl font-black text-base shadow-lg shadow-emerald-500/30 active:scale-95 transition-all flex items-center justify-center gap-2"
                   >
                     <CheckCircle2 size={18} strokeWidth={2.5} />
                     Complete Order ({formatCurrency(liveTotal)})
@@ -1202,27 +1202,27 @@ export default function App() {
                       <User size={20} />
                     </div>
                     <div>
-                      <h4 className="text-sm font-black text-slate-900">{selectedCustomer.name}</h4>
+                      <h4 className="text-base font-black text-slate-900">{selectedCustomer.name}</h4>
                       <div className="flex gap-3 mt-0.5">
-                        {selectedCustomer.phone && <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1"><Phone size={8} /> {selectedCustomer.phone}</span>}
-                        {selectedCustomer.address && <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1"><MapPin size={8} /> {selectedCustomer.address}</span>}
+                        {selectedCustomer.phone && <span className="text-[12px] font-bold text-slate-400 flex items-center gap-1"><Phone size={8} /> {selectedCustomer.phone}</span>}
+                        {selectedCustomer.address && <span className="text-[12px] font-bold text-slate-400 flex items-center gap-1"><MapPin size={8} /> {selectedCustomer.address}</span>}
                       </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="bg-white p-2 rounded-xl text-center">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Spent</p>
-                      <p className="text-sm font-black text-slate-900">{formatCurrency(stats.customerStats?.totalSpent || 0)}</p>
+                      <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Total Spent</p>
+                      <p className="text-base font-black text-slate-900">{formatCurrency(stats.customerStats?.totalSpent || 0)}</p>
                     </div>
                     <div className="bg-white p-2 rounded-xl text-center">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Orders</p>
-                      <p className="text-sm font-black text-slate-900">{stats.customerStats?.orderCount || 0}</p>
+                      <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Orders</p>
+                      <p className="text-base font-black text-slate-900">{stats.customerStats?.orderCount || 0}</p>
                     </div>
                   </div>
                   {stats.customerStats?.totalSpent && stats.customerStats.totalSpent > 0 && (
                     <button 
                       onClick={() => setConfirmMarkPaid(true)}
-                      className="w-full bg-white text-slate-500 py-2 rounded-xl font-black text-[11px] uppercase tracking-widest border border-slate-200"
+                      className="w-full bg-white text-slate-500 py-2 rounded-xl font-black text-[13px] uppercase tracking-widest border border-slate-200"
                     >
                       Clear Debt
                     </button>
@@ -1230,17 +1230,17 @@ export default function App() {
                 </div>
 
                 <div className="pb-20">
-                  <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2">Recent Activity</h3>
+                  <h3 className="text-[13px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2">Recent Activity</h3>
                   <div className="space-y-2">
                     {orders.filter(o => o.customerId === selectedCustomer.id).slice(0, 3).map(order => (
                       <div key={order.id} className="bg-white p-3 rounded-xl border border-slate-50 shadow-sm flex items-center justify-between">
                         <div>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+                          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
                             {order.createdAt?.toDate().toLocaleDateString('en-LB', { month: 'short', day: 'numeric' })}
                           </p>
-                          <p className="font-black text-base text-slate-900">{formatCurrency(order.total)}</p>
+                          <p className="font-black text-lg text-slate-900">{formatCurrency(order.total)}</p>
                         </div>
-                        <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${
+                        <div className={`px-2 py-1 rounded-md text-[11px] font-black uppercase tracking-widest ${
                           order.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 
                           order.status === 'delivered' ? 'bg-blue-500/10 text-blue-500' : 
                           'bg-amber-500/10 text-amber-500'
@@ -1255,7 +1255,7 @@ export default function App() {
                 <div className="flex justify-center pt-4 pb-24">
                   <button 
                     onClick={() => setConfirmDeleteId(selectedCustomer.id)}
-                    className="flex items-center gap-2 text-[12px] font-black text-red-300 hover:text-red-500 uppercase tracking-[0.2em] transition-colors py-2 px-4 rounded-xl border border-transparent hover:border-red-100"
+                    className="flex items-center gap-2 text-sm font-black text-red-300 hover:text-red-500 uppercase tracking-[0.2em] transition-colors py-2 px-4 rounded-xl border border-transparent hover:border-red-100"
                   >
                     <Trash2 size={12} />
                     Delete Customer
