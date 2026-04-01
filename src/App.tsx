@@ -618,10 +618,10 @@ export default function App() {
     <ErrorBoundary>
       <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 sticky top-0 z-20 px-4 py-4">
+        <header className="bg-white border-b border-slate-200 sticky top-0 z-20 px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h1 className="text-xl font-black tracking-tighter text-slate-900">
+            <div className="space-y-0.5">
+              <h1 className="text-lg font-black tracking-tighter text-slate-900">
                 {view === 'home' ? 'DeliveryHelp' : 
                  view === 'stats' ? 'Statistics' :
                  view === 'add-customer' ? (editingCustomer ? 'Edit Client' : 'New Client') : 
@@ -634,18 +634,18 @@ export default function App() {
                 </p>
               )}
             </div>
-            {view !== 'home' && (
-              <button 
-                onClick={() => {
-                  setEditingCustomer(null);
-                  setView('home');
-                  setSelectedCustomer(null);
-                }}
-                className="p-3 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-all active:scale-90 text-slate-600"
-              >
-                <ArrowLeft size={24} strokeWidth={3} />
-              </button>
-            )}
+              {view !== 'home' && (
+                <button 
+                  onClick={() => {
+                    setEditingCustomer(null);
+                    setView('home');
+                    setSelectedCustomer(null);
+                  }}
+                  className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all active:scale-90 text-slate-600"
+                >
+                  <ArrowLeft size={20} strokeWidth={3} />
+                </button>
+              )}
           </div>
         </header>
 
@@ -662,15 +662,15 @@ export default function App() {
               {view === 'home' && (
                 <div key="home" className="space-y-4">
                   {/* Summary Card */}
-                  <div className="bg-white rounded-[2.5rem] p-8 text-slate-900 shadow-xl shadow-slate-200/50 border border-slate-100">
-                    <div className="grid grid-cols-2 gap-8">
+                  <div className="bg-white rounded-[2rem] p-6 text-slate-900 shadow-xl shadow-slate-200/50 border border-slate-100">
+                    <div className="grid grid-cols-2 gap-6">
                       <div className="border-r border-slate-100 pr-4">
-                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">Admin Outstanding</p>
-                        <p className="text-xl font-black text-red-500 tracking-tighter">LL {stats.totalDebt.toLocaleString()}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Admin Outstanding</p>
+                        <p className="text-lg font-black text-red-500 tracking-tighter">LL {stats.totalDebt.toLocaleString()}</p>
                       </div>
                       <div className="pl-4">
-                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">Total Clients</p>
-                        <p className="text-xl font-black text-slate-900 tracking-tighter">{customers.length}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Clients</p>
+                        <p className="text-lg font-black text-slate-900 tracking-tighter">{customers.length}</p>
                       </div>
                     </div>
                   </div>
@@ -678,20 +678,20 @@ export default function App() {
                   {/* Search & Add */}
                   <div className="relative">
                     <div className="relative">
-                      <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={22} />
+                      <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input 
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search clients..."
-                        className="w-full bg-white border-2 border-slate-100 rounded-[2rem] pl-14 pr-14 py-5 focus:outline-none focus:border-emerald-500 transition-all text-base font-bold text-slate-900 shadow-sm"
+                        className="w-full bg-white border-2 border-slate-100 rounded-[1.5rem] pl-12 pr-12 py-3.5 focus:outline-none focus:border-emerald-500 transition-all text-sm font-bold text-slate-900 shadow-sm"
                       />
                       {searchQuery && (
                         <button 
                           onClick={() => setSearchQuery('')}
                           className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-600"
                         >
-                          <X size={22} />
+                          <X size={18} />
                         </button>
                       )}
                     </div>
@@ -701,9 +701,9 @@ export default function App() {
                         setCustomerForm({ name: '', phone: '', address: '' });
                         setView('add-customer');
                       }}
-                      className="absolute -right-2 -top-8 bg-emerald-500 text-white p-5 rounded-[2rem] shadow-xl shadow-emerald-500/30 active:scale-90 z-10 hover:bg-emerald-600 transition-all"
+                      className="absolute -right-1 -top-6 bg-emerald-500 text-white p-4 rounded-[1.5rem] shadow-xl shadow-emerald-500/30 active:scale-90 z-10 hover:bg-emerald-600 transition-all"
                     >
-                      <Plus size={32} strokeWidth={4} />
+                      <Plus size={24} strokeWidth={4} />
                     </button>
                   </div>
 
@@ -715,33 +715,33 @@ export default function App() {
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         key={customer.id}
-                        className="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-sm flex items-center justify-between active:bg-slate-50 transition-all relative group hover:shadow-md"
+                        className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between active:bg-slate-50 transition-all relative group hover:shadow-md"
                       >
                         <div 
                           onClick={() => selectCustomer(customer)}
                           className="flex-1 cursor-pointer"
                         >
-                          <div className="flex justify-between items-start mb-3">
-                            <p className="font-black text-lg text-slate-900 leading-tight tracking-tight">{customer.name}</p>
-                            <div className="flex items-center gap-3">
+                          <div className="flex justify-between items-start mb-2">
+                            <p className="font-black text-base text-slate-900 leading-tight tracking-tight">{customer.name}</p>
+                            <div className="flex items-center gap-2">
                               <button 
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   selectCustomer(customer);
                                 }}
-                                className="p-4 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-90 transition-all"
+                                className="p-3 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/20 active:scale-90 transition-all"
                                 title="New Order"
                               >
-                                <Plus size={20} strokeWidth={4} />
+                                <Plus size={16} strokeWidth={4} />
                               </button>
                               <button 
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setConfirmDeleteId(customer.id);
                                 }}
-                                className="text-red-400/20 hover:text-red-500 p-2 transition-colors"
+                                className="text-red-400/20 hover:text-red-500 p-1.5 transition-colors"
                               >
-                                <Trash2 size={22} />
+                                <Trash2 size={18} />
                               </button>
                             </div>
                           </div>
@@ -767,11 +767,11 @@ export default function App() {
                       </motion.div>
                     ))}
                     {filteredCustomers.length === 0 && (
-                      <div className="text-center py-16 bg-white rounded-[2rem] border-2 border-dashed border-slate-100 flex flex-col items-center">
-                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-200">
-                          <Truck size={48} strokeWidth={1.5} />
+                      <div className="text-center py-12 bg-white rounded-[2rem] border-2 border-dashed border-slate-100 flex flex-col items-center">
+                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-200">
+                          <Truck size={32} strokeWidth={1.5} />
                         </div>
-                        <p className="text-slate-400 font-black text-sm uppercase tracking-widest">No clients found</p>
+                        <p className="text-slate-400 font-black text-xs uppercase tracking-widest">No clients found</p>
                       </div>
                     )}
                   </div>
@@ -791,18 +791,18 @@ export default function App() {
                   <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="bg-emerald-600/20 border border-emerald-500/20 p-6 rounded-[2rem] text-emerald-500 shadow-sm"
+                    className="bg-emerald-600/20 border border-emerald-500/20 p-4 rounded-[1.5rem] text-emerald-500 shadow-sm"
                   >
-                    <p className="text-[11px] font-black opacity-80 uppercase tracking-widest mb-2">Total Earned</p>
-                    <p className="text-xl font-black tracking-tight">{formatCurrency(stats.totalEarned)}</p>
+                    <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mb-1">Total Earned</p>
+                    <p className="text-lg font-black tracking-tight">{formatCurrency(stats.totalEarned)}</p>
                   </motion.div>
                   <motion.div 
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="bg-red-600/20 border border-red-500/20 p-6 rounded-[2rem] text-red-500 shadow-sm"
+                    className="bg-red-600/20 border border-red-500/20 p-4 rounded-[1.5rem] text-red-500 shadow-sm"
                   >
-                    <p className="text-[11px] font-black opacity-80 uppercase tracking-widest mb-2">Total Debt</p>
-                    <p className="text-xl font-black tracking-tight">{formatCurrency(stats.totalDebt)}</p>
+                    <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mb-1">Total Debt</p>
+                    <p className="text-lg font-black tracking-tight">{formatCurrency(stats.totalDebt)}</p>
                   </motion.div>
                 </div>
 
@@ -961,50 +961,50 @@ export default function App() {
                 key="add-customer" 
                 className="space-y-8 p-4"
               >
-                <div className="flex flex-col items-center justify-center py-6">
-                  <div className="w-24 h-24 bg-emerald-500/10 text-emerald-500 rounded-[2rem] flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/5">
-                    <Truck size={48} strokeWidth={2} />
+                <div className="flex flex-col items-center justify-center py-4">
+                  <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-[1.5rem] flex items-center justify-center mb-3 shadow-lg shadow-emerald-500/5">
+                    <Truck size={32} strokeWidth={2} />
                   </div>
-                  <p className="text-sm font-black text-slate-500 uppercase tracking-[0.3em]">Customer Details</p>
+                  <p className="text-xs font-black text-slate-500 uppercase tracking-[0.3em]">Customer Details</p>
                 </div>
-                <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/40 space-y-8">
-                  <div className="space-y-6">
-                    <div className="space-y-3">
-                      <label className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-3">Full Name</label>
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-2xl shadow-slate-200/40 space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-3">Full Name</label>
                       <input 
                         type="text"
                         value={customerForm.name}
                         onChange={(e) => setCustomerForm({...customerForm, name: e.target.value})}
                         placeholder="Customer Name"
-                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] px-6 py-5 focus:outline-none focus:border-emerald-500/50 focus:bg-white transition-all text-lg font-black text-slate-900 placeholder:text-slate-300"
+                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.2rem] px-5 py-4 focus:outline-none focus:border-emerald-500/50 focus:bg-white transition-all text-base font-black text-slate-900 placeholder:text-slate-300"
                       />
                     </div>
-                    <div className="space-y-3">
-                      <label className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-3">Phone Number</label>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-3">Phone Number</label>
                       <input 
                         type="tel"
                         value={customerForm.phone}
                         onChange={(e) => setCustomerForm({...customerForm, phone: e.target.value})}
                         placeholder="e.g. 70123456"
-                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] px-6 py-5 focus:outline-none focus:border-emerald-500/50 focus:bg-white transition-all text-lg font-black text-slate-900 placeholder:text-slate-300"
+                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.2rem] px-5 py-4 focus:outline-none focus:border-emerald-500/50 focus:bg-white transition-all text-base font-black text-slate-900 placeholder:text-slate-300"
                       />
                     </div>
-                    <div className="space-y-3">
-                      <label className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-3">Address</label>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-3">Address</label>
                       <textarea 
                         value={customerForm.address}
                         onChange={(e) => setCustomerForm({...customerForm, address: e.target.value})}
                         placeholder="Delivery Address"
-                        rows={3}
-                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] px-6 py-5 focus:outline-none focus:border-emerald-500/50 focus:bg-white transition-all text-lg font-black text-slate-900 placeholder:text-slate-300"
+                        rows={2}
+                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.2rem] px-5 py-4 focus:outline-none focus:border-emerald-500/50 focus:bg-white transition-all text-base font-black text-slate-900 placeholder:text-slate-300"
                       />
                     </div>
                   </div>
                   <button 
                     onClick={saveCustomer}
-                    className="w-full bg-emerald-500 text-white py-6 rounded-[1.5rem] font-black text-lg shadow-xl shadow-emerald-500/20 hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-4"
+                    className="w-full bg-emerald-500 text-white py-4 rounded-[1.2rem] font-black text-base shadow-xl shadow-emerald-500/20 hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3"
                   >
-                    <Check size={28} strokeWidth={3} />
+                    <Check size={20} strokeWidth={3} />
                     {editingCustomer ? 'Update Customer' : 'Save Customer'}
                   </button>
                 </div>
@@ -1025,22 +1025,22 @@ export default function App() {
                   <p className="text-sm font-black text-slate-400 uppercase tracking-[0.3em]">Client Profile</p>
                 </div>
                 {/* Profile Header */}
-                <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/40 space-y-6">
-                  <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 bg-emerald-500 rounded-[2rem] flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-                      <User size={40} strokeWidth={2.5} />
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 space-y-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-emerald-500 rounded-[1.5rem] flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                      <User size={32} strokeWidth={2.5} />
                     </div>
                     <div className="flex-1">
-                      <h2 className="text-2xl font-black text-slate-900 leading-tight tracking-tight">{selectedCustomer.name}</h2>
-                      <div className="flex flex-col gap-2 mt-3">
+                      <h2 className="text-xl font-black text-slate-900 leading-tight tracking-tight">{selectedCustomer.name}</h2>
+                      <div className="flex flex-col gap-1 mt-2">
                         {selectedCustomer.phone && (
-                          <a href={`tel:${selectedCustomer.phone}`} className="text-sm font-black text-emerald-500 flex items-center gap-3">
-                            <Phone size={16} /> {selectedCustomer.phone}
+                          <a href={`tel:${selectedCustomer.phone}`} className="text-[11px] font-black text-emerald-500 flex items-center gap-2">
+                            <Phone size={14} /> {selectedCustomer.phone}
                           </a>
                         )}
                         {selectedCustomer.address && (
-                          <p className="text-sm font-bold text-slate-400 flex items-center gap-3">
-                            <MapPin size={16} /> {selectedCustomer.address}
+                          <p className="text-[11px] font-bold text-slate-400 flex items-center gap-2">
+                            <MapPin size={14} /> {selectedCustomer.address}
                           </p>
                         )}
                       </div>
@@ -1076,28 +1076,28 @@ export default function App() {
                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Quick Categories</h3>
                     <span className="text-xs font-black text-emerald-500 bg-emerald-50 px-4 py-2 rounded-2xl">SELECT SHOP</span>
                   </div>
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-4 gap-3">
                     {[
-                      { name: 'Supermarket', icon: <Store size={28} />, color: 'bg-blue-500' },
-                      { name: 'Pharmacy', icon: <Plus size={28} />, color: 'bg-red-500' },
-                      { name: 'Bakery', icon: <Package size={28} />, color: 'bg-amber-500' },
-                      { name: 'Butcher', icon: <Package size={28} />, color: 'bg-rose-500' },
-                      { name: 'Roastery', icon: <Package size={28} />, color: 'bg-orange-500' },
-                      { name: 'Vegetables', icon: <Package size={28} />, color: 'bg-emerald-500' },
-                      { name: 'Restaurant', icon: <Store size={28} />, color: 'bg-indigo-500' },
-                      { name: 'Other', icon: <MoreVertical size={28} />, color: 'bg-slate-500' }
+                      { name: 'Supermarket', icon: <Store size={20} />, color: 'bg-blue-500' },
+                      { name: 'Pharmacy', icon: <Plus size={20} />, color: 'bg-red-500' },
+                      { name: 'Bakery', icon: <Package size={20} />, color: 'bg-amber-500' },
+                      { name: 'Butcher', icon: <Package size={20} />, color: 'bg-rose-500' },
+                      { name: 'Roastery', icon: <Package size={20} />, color: 'bg-orange-500' },
+                      { name: 'Vegetables', icon: <Package size={20} />, color: 'bg-emerald-500' },
+                      { name: 'Restaurant', icon: <Store size={20} />, color: 'bg-indigo-500' },
+                      { name: 'Other', icon: <MoreVertical size={20} />, color: 'bg-slate-500' }
                     ].map((cat) => (
                       <button
                         key={cat.name}
                         onClick={() => setShopName(cat.name)}
-                        className={`flex flex-col items-center justify-center p-6 rounded-[2rem] border-2 transition-all active:scale-90 ${
+                        className={`flex flex-col items-center justify-center p-4 rounded-[1.5rem] border-2 transition-all active:scale-90 ${
                           shopName === cat.name 
                             ? `${cat.color} border-transparent text-white shadow-2xl shadow-${cat.color.split('-')[1]}-500/50` 
                             : 'bg-slate-50 border-slate-50 text-slate-500 hover:border-emerald-100'
                         }`}
                       >
                         {cat.icon}
-                        <span className="text-[10px] font-black mt-3 uppercase tracking-tighter">{cat.name}</span>
+                        <span className="text-[9px] font-black mt-2 uppercase tracking-tighter">{cat.name}</span>
                       </button>
                     ))}
                   </div>
@@ -1105,66 +1105,66 @@ export default function App() {
 
                 {/* Add Item Form */}
                 <div className="bg-white p-6 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/30 space-y-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-4">Shop Name</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Shop Name</label>
                       <div className="relative">
                         <input 
                           type="text"
                           value={shopName}
                           onChange={(e) => setShopName(e.target.value)}
                           placeholder="e.g. Supermarket"
-                          className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] pl-5 pr-14 py-6 text-lg font-black text-slate-900 focus:outline-none focus:border-emerald-500/50 transition-all"
+                          className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.2rem] pl-4 pr-12 py-4 text-base font-black text-slate-900 focus:outline-none focus:border-emerald-500/50 transition-all"
                         />
                         <button 
                           onClick={startVoiceCapture}
-                          className={`absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-emerald-500'}`}
+                          className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-emerald-500'}`}
                         >
-                          <Mic size={24} />
+                          <Mic size={18} />
                         </button>
                       </div>
                     </div>
-                    <div className="space-y-3">
-                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-4">Price (L.L.)</label>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Price (L.L.)</label>
                       <input 
                         type="number"
                         inputMode="numeric"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
                         placeholder="0"
-                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] px-5 py-6 text-lg font-black text-slate-900 focus:outline-none focus:border-emerald-500/50 transition-all"
+                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.2rem] px-4 py-4 text-base font-black text-slate-900 focus:outline-none focus:border-emerald-500/50 transition-all"
                       />
                     </div>
                   </div>
                   <button 
                     onClick={addItemToOrder}
                     disabled={!shopName || !price}
-                    className="w-full bg-slate-900 text-white py-6 rounded-[1.5rem] font-black text-lg shadow-xl shadow-slate-900/20 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30 disabled:active:scale-100"
+                    className="w-full bg-slate-900 text-white py-4 rounded-[1.2rem] font-black text-base shadow-xl shadow-slate-900/20 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30 disabled:active:scale-100"
                   >
-                    <Plus size={28} strokeWidth={3} />
+                    <Plus size={20} strokeWidth={3} />
                     Add to Bill
                   </button>
                 </div>
 
                 {/* Delivery Fee */}
-                <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/30">
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/30">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-[1.5rem] flex items-center justify-center">
-                        <Calculator size={32} />
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-[1rem] flex items-center justify-center">
+                        <Calculator size={24} />
                       </div>
-                      <label className="text-sm font-black text-slate-400 uppercase tracking-widest">Delivery Fee</label>
+                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Delivery Fee</label>
                     </div>
-                    <div className="relative w-56">
+                    <div className="relative w-40">
                       <input 
                         type="number"
                         inputMode="numeric"
                         value={deliveryFee}
                         onChange={(e) => setDeliveryFee(e.target.value)}
                         placeholder="0"
-                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] pl-6 pr-16 py-6 text-xl font-black text-slate-900 text-right focus:outline-none focus:border-emerald-500/50 transition-all"
+                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1rem] pl-4 pr-12 py-4 text-lg font-black text-slate-900 text-right focus:outline-none focus:border-emerald-500/50 transition-all"
                       />
-                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-slate-300">LL</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">LL</span>
                     </div>
                   </div>
                 </div>
@@ -1216,9 +1216,9 @@ export default function App() {
                 {currentItems.length > 0 && (
                   <button 
                     onClick={submitOrder}
-                    className="w-full bg-emerald-500 text-white py-6 rounded-[2rem] font-black text-lg shadow-2xl shadow-emerald-500/30 hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-4"
+                    className="w-full bg-emerald-500 text-white py-4 rounded-[1.5rem] font-black text-base shadow-2xl shadow-emerald-500/30 hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3"
                   >
-                    <CheckCircle2 size={32} strokeWidth={2.5} />
+                    <CheckCircle2 size={24} strokeWidth={2.5} />
                     Complete Order
                   </button>
                 )}
@@ -1255,11 +1255,11 @@ export default function App() {
 
             {view === 'history' && (
               <div key="history" className="space-y-8">
-                <div className="flex flex-col items-center justify-center py-6">
-                  <div className="w-24 h-24 bg-emerald-500/10 text-emerald-500 rounded-[2rem] flex items-center justify-center mb-4">
-                    <Truck size={48} strokeWidth={2} />
+                <div className="flex flex-col items-center justify-center py-4">
+                  <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-[1.5rem] flex items-center justify-center mb-3">
+                    <Truck size={32} strokeWidth={2} />
                   </div>
-                  <p className="text-[13px] font-black text-slate-500 uppercase tracking-widest">Past Deliveries</p>
+                  <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Past Deliveries</p>
                 </div>
                 <div className="space-y-6">
                   <div className="flex items-center justify-between px-3">
@@ -1313,67 +1313,67 @@ export default function App() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       key={order.id} 
-                      className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/40 space-y-5 group"
+                      className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-2xl shadow-slate-200/40 space-y-4 group"
                     >
                       <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-5">
-                          <div className={`p-4 rounded-2xl ${
+                        <div className="flex items-center gap-4">
+                          <div className={`p-3 rounded-xl ${
                             order.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 
                             order.status === 'delivered' ? 'bg-blue-500/10 text-blue-500' : 
                             'bg-amber-500/10 text-amber-500'
                           }`}>
-                            {order.status === 'paid' ? <CheckCircle size={24} /> : 
-                             order.status === 'delivered' ? <Package size={24} /> : 
-                             <Clock size={24} />}
+                            {order.status === 'paid' ? <CheckCircle size={20} /> : 
+                             order.status === 'delivered' ? <Package size={20} /> : 
+                             <Clock size={20} />}
                           </div>
                           <div>
-                            <p className="text-[12px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-2 mb-1.5">
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-2 mb-1">
                               {order.createdAt?.toDate().toLocaleDateString('en-LB', { month: 'short', day: 'numeric', year: 'numeric' })}
-                              <span className="w-2 h-2 bg-slate-200 rounded-full" />
+                              <span className="w-1.5 h-1.5 bg-slate-200 rounded-full" />
                               {order.customerName}
                             </p>
-                            <p className="text-2xl font-black text-slate-900 tracking-tighter">{formatCurrency(order.total)}</p>
+                            <p className="text-xl font-black text-slate-900 tracking-tighter">{formatCurrency(order.total)}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           <button 
                             onClick={() => shareToWhatsApp(order)}
-                            className="p-3 text-emerald-500 hover:bg-emerald-50 rounded-2xl transition-all active:scale-90"
+                            className="p-2 text-emerald-500 hover:bg-emerald-50 rounded-xl transition-all active:scale-90"
                             title="Share to WhatsApp"
                           >
-                            <MessageCircle size={26} />
+                            <MessageCircle size={20} />
                           </button>
                           <button 
                             onClick={() => copyToClipboard(order)}
-                            className="p-3 text-blue-500 hover:bg-blue-50 rounded-2xl transition-all active:scale-90"
+                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-all active:scale-90"
                             title="Copy to Clipboard"
                           >
-                            <Copy size={26} />
+                            <Copy size={20} />
                           </button>
                           <button 
                             onClick={() => setConfirmDeleteOrderId(order.id)}
-                            className="p-3 text-slate-300 hover:text-red-500 transition-colors active:scale-90"
+                            className="p-2 text-slate-300 hover:text-red-500 transition-colors active:scale-90"
                           >
-                            <Trash2 size={26} />
+                            <Trash2 size={20} />
                           </button>
                         </div>
                       </div>
                       
-                      <div className="bg-slate-50 p-5 rounded-[2rem] space-y-4">
-                        <div className="flex justify-between items-center pb-3 border-b border-slate-200/50">
-                          <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <Clock size={14} /> {order.createdAt?.toDate().toLocaleString('en-LB', { dateStyle: 'short', timeStyle: 'short' })}
+                      <div className="bg-slate-50 p-4 rounded-[1.5rem] space-y-3">
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                            <Clock size={12} /> {order.createdAt?.toDate().toLocaleString('en-LB', { dateStyle: 'short', timeStyle: 'short' })}
                           </span>
-                          <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">ID: {order.id.slice(-4)}</span>
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ID: {order.id.slice(-4)}</span>
                         </div>
                         {order.items.map((item, i) => (
-                          <div key={i} className="flex justify-between text-sm items-center">
+                          <div key={i} className="flex justify-between text-xs items-center">
                             <span className="text-slate-500 font-black">{item.shop}</span>
                             <span className="font-black text-slate-900">{formatCurrency(item.price)}</span>
                           </div>
                         ))}
-                        <div className="pt-3 border-t border-slate-200/50 flex justify-between text-sm items-center">
-                          <span className="text-slate-400 font-black uppercase text-[11px] tracking-widest">Delivery Fee</span>
+                        <div className="pt-2 border-t border-slate-200/50 flex justify-between text-xs items-center">
+                          <span className="text-slate-400 font-black uppercase text-[9px] tracking-widest">Delivery Fee</span>
                           <span className="font-black text-emerald-500">{formatCurrency(order.deliveryFee)}</span>
                         </div>
                       </div>
@@ -1408,11 +1408,11 @@ export default function App() {
                     </motion.div>
                   ))}
                     {filteredOrders.length === 0 && (
-                      <div className="text-center py-16 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 flex flex-col items-center">
-                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-200">
-                          <Truck size={40} strokeWidth={1.5} />
+                      <div className="text-center py-12 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 flex flex-col items-center">
+                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-200">
+                          <Truck size={32} strokeWidth={1.5} />
                         </div>
-                        <p className="text-slate-400 font-black text-base uppercase tracking-widest">No orders found</p>
+                        <p className="text-slate-400 font-black text-sm uppercase tracking-widest">No orders found</p>
                       </div>
                     )}
                 </div>
