@@ -618,10 +618,10 @@ export default function App() {
     <ErrorBoundary>
       <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 sticky top-0 z-20 px-4 py-3">
+        <header className="bg-white border-b border-slate-200 sticky top-0 z-20 px-4 py-2.5">
           <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <h1 className="text-lg font-black tracking-tighter text-slate-900">
+            <div className="space-y-0">
+              <h1 className="text-base font-black tracking-tighter text-slate-900">
                 {view === 'home' ? 'DeliveryHelp' : 
                  view === 'stats' ? 'Statistics' :
                  view === 'add-customer' ? (editingCustomer ? 'Edit Client' : 'New Client') : 
@@ -662,15 +662,15 @@ export default function App() {
               {view === 'home' && (
                 <div key="home" className="space-y-4">
                   {/* Summary Card */}
-                  <div className="bg-white rounded-[2rem] p-6 text-slate-900 shadow-xl shadow-slate-200/50 border border-slate-100">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="border-r border-slate-100 pr-4">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Admin Outstanding</p>
-                        <p className="text-lg font-black text-red-500 tracking-tighter">LL {stats.totalDebt.toLocaleString()}</p>
+                  <div className="bg-white rounded-[1.5rem] p-4 text-slate-900 shadow-lg shadow-slate-200/40 border border-slate-100">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="border-r border-slate-100 pr-3">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Admin Outstanding</p>
+                        <p className="text-base font-black text-red-500 tracking-tighter">LL {stats.totalDebt.toLocaleString()}</p>
                       </div>
-                      <div className="pl-4">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Clients</p>
-                        <p className="text-lg font-black text-slate-900 tracking-tighter">{customers.length}</p>
+                      <div className="pl-3">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Clients</p>
+                        <p className="text-base font-black text-slate-900 tracking-tighter">{customers.length}</p>
                       </div>
                     </div>
                   </div>
@@ -678,20 +678,20 @@ export default function App() {
                   {/* Search & Add */}
                   <div className="relative">
                     <div className="relative">
-                      <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                       <input 
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search clients..."
-                        className="w-full bg-white border-2 border-slate-100 rounded-[1.5rem] pl-12 pr-12 py-3.5 focus:outline-none focus:border-emerald-500 transition-all text-sm font-bold text-slate-900 shadow-sm"
+                        className="w-full bg-white border-2 border-slate-100 rounded-[1.2rem] pl-10 pr-10 py-2.5 focus:outline-none focus:border-emerald-500 transition-all text-xs font-bold text-slate-900 shadow-sm"
                       />
                       {searchQuery && (
                         <button 
                           onClick={() => setSearchQuery('')}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-600"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600"
                         >
-                          <X size={18} />
+                          <X size={16} />
                         </button>
                       )}
                     </div>
@@ -701,9 +701,9 @@ export default function App() {
                         setCustomerForm({ name: '', phone: '', address: '' });
                         setView('add-customer');
                       }}
-                      className="absolute -right-1 -top-6 bg-emerald-500 text-white p-4 rounded-[1.5rem] shadow-xl shadow-emerald-500/30 active:scale-90 z-10 hover:bg-emerald-600 transition-all"
+                      className="absolute -right-1 -top-5 bg-emerald-500 text-white p-3.5 rounded-[1.2rem] shadow-lg shadow-emerald-500/20 active:scale-90 z-10 hover:bg-emerald-600 transition-all"
                     >
-                      <Plus size={24} strokeWidth={4} />
+                      <Plus size={20} strokeWidth={4} />
                     </button>
                   </div>
 
@@ -715,51 +715,51 @@ export default function App() {
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         key={customer.id}
-                        className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between active:bg-slate-50 transition-all relative group hover:shadow-md"
+                        className="bg-white p-3.5 rounded-[1.5rem] border border-slate-100 shadow-sm flex items-center justify-between active:bg-slate-50 transition-all relative group hover:shadow-md"
                       >
                         <div 
                           onClick={() => selectCustomer(customer)}
                           className="flex-1 cursor-pointer"
                         >
-                          <div className="flex justify-between items-start mb-2">
-                            <p className="font-black text-base text-slate-900 leading-tight tracking-tight">{customer.name}</p>
-                            <div className="flex items-center gap-2">
+                          <div className="flex justify-between items-start mb-1.5">
+                            <p className="font-black text-sm text-slate-900 leading-tight tracking-tight">{customer.name}</p>
+                            <div className="flex items-center gap-1.5">
                               <button 
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   selectCustomer(customer);
                                 }}
-                                className="p-3 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/20 active:scale-90 transition-all"
+                                className="p-2.5 bg-emerald-500 text-white rounded-lg shadow-lg shadow-emerald-500/10 active:scale-90 transition-all"
                                 title="New Order"
                               >
-                                <Plus size={16} strokeWidth={4} />
+                                <Plus size={14} strokeWidth={4} />
                               </button>
                               <button 
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setConfirmDeleteId(customer.id);
                                 }}
-                                className="text-red-400/20 hover:text-red-500 p-1.5 transition-colors"
+                                className="text-red-400/20 hover:text-red-500 p-1 transition-colors"
                               >
-                                <Trash2 size={18} />
+                                <Trash2 size={16} />
                               </button>
                             </div>
                           </div>
                           <div className="flex items-center justify-between">
                             {customer.unpaidBalance > 0 ? (
-                              <div className="bg-red-500/10 text-red-500 px-4 py-2 rounded-xl">
-                                <span className="text-xs font-black uppercase tracking-widest">
+                              <div className="bg-red-500/10 text-red-500 px-3 py-1.5 rounded-lg">
+                                <span className="text-[10px] font-black uppercase tracking-widest">
                                   LL {customer.unpaidBalance.toLocaleString()}
                                 </span>
                               </div>
                             ) : (
-                              <div className="bg-emerald-500/10 text-emerald-500 px-4 py-2 rounded-xl">
-                                <span className="text-xs font-black uppercase tracking-widest">
+                              <div className="bg-emerald-500/10 text-emerald-500 px-3 py-1.5 rounded-lg">
+                                <span className="text-[10px] font-black uppercase tracking-widest">
                                   0 Clear
                                 </span>
                               </div>
                             )}
-                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
                               Last: {orders.filter(o => o.customerId === customer.id)[0]?.createdAt?.toDate().toISOString().split('T')[0] || 'NONE'}
                             </span>
                           </div>
@@ -767,11 +767,11 @@ export default function App() {
                       </motion.div>
                     ))}
                     {filteredCustomers.length === 0 && (
-                      <div className="text-center py-12 bg-white rounded-[2rem] border-2 border-dashed border-slate-100 flex flex-col items-center">
-                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-200">
-                          <Truck size={32} strokeWidth={1.5} />
+                      <div className="text-center py-8 bg-white rounded-[1.5rem] border-2 border-dashed border-slate-100 flex flex-col items-center">
+                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-slate-200">
+                          <Truck size={24} strokeWidth={1.5} />
                         </div>
-                        <p className="text-slate-400 font-black text-xs uppercase tracking-widest">No clients found</p>
+                        <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest">No clients found</p>
                       </div>
                     )}
                   </div>
@@ -787,22 +787,22 @@ export default function App() {
                   <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Performance Insights</p>
                 </div>
                 {/* Stats Summary */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="bg-emerald-600/20 border border-emerald-500/20 p-4 rounded-[1.5rem] text-emerald-500 shadow-sm"
+                    className="bg-emerald-600/20 border border-emerald-500/20 p-3.5 rounded-[1.2rem] text-emerald-500 shadow-sm"
                   >
-                    <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mb-1">Total Earned</p>
-                    <p className="text-lg font-black tracking-tight">{formatCurrency(stats.totalEarned)}</p>
+                    <p className="text-[9px] font-black opacity-80 uppercase tracking-widest mb-0.5">Total Earned</p>
+                    <p className="text-base font-black tracking-tight">{formatCurrency(stats.totalEarned)}</p>
                   </motion.div>
                   <motion.div 
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="bg-red-600/20 border border-red-500/20 p-4 rounded-[1.5rem] text-red-500 shadow-sm"
+                    className="bg-red-600/20 border border-red-500/20 p-3.5 rounded-[1.2rem] text-red-500 shadow-sm"
                   >
-                    <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mb-1">Total Debt</p>
-                    <p className="text-lg font-black tracking-tight">{formatCurrency(stats.totalDebt)}</p>
+                    <p className="text-[9px] font-black opacity-80 uppercase tracking-widest mb-0.5">Total Debt</p>
+                    <p className="text-base font-black tracking-tight">{formatCurrency(stats.totalDebt)}</p>
                   </motion.div>
                 </div>
 
@@ -810,16 +810,16 @@ export default function App() {
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/30 space-y-4"
+                  className="bg-white p-4 rounded-[1.5rem] border border-slate-100 shadow-lg shadow-slate-200/30 space-y-3"
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">7-Day Performance</h3>
-                    <div className="flex items-center gap-1.5 text-emerald-500 font-black text-[11px]">
-                      <ArrowUpRight size={14} />
+                    <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest">7-Day Performance</h3>
+                    <div className="flex items-center gap-1 text-emerald-500 font-black text-[9px]">
+                      <ArrowUpRight size={12} />
                       <span>Live Stats</span>
                     </div>
                   </div>
-                  <div className="h-48 w-full">
+                  <div className="h-40 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={stats.chartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
@@ -848,24 +848,24 @@ export default function App() {
                 </motion.div>
 
                 {/* Extra Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-blue-500/10 text-blue-500 rounded-xl flex items-center justify-center">
-                        <Package size={16} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white p-4 rounded-[1.2rem] border border-slate-100 shadow-sm">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="w-7 h-7 bg-blue-500/10 text-blue-500 rounded-lg flex items-center justify-center">
+                        <Package size={14} />
                       </div>
-                      <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Total Orders</p>
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Orders</p>
                     </div>
-                    <p className="text-xl font-black text-slate-900 tracking-tight">{stats.orderCount}</p>
+                    <p className="text-base font-black text-slate-900 tracking-tight">{stats.orderCount}</p>
                   </div>
-                  <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center">
-                        <User size={16} />
+                  <div className="bg-white p-4 rounded-[1.2rem] border border-slate-100 shadow-sm">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="w-7 h-7 bg-amber-500/10 text-amber-500 rounded-lg flex items-center justify-center">
+                        <User size={14} />
                       </div>
-                      <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Total Clients</p>
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Clients</p>
                     </div>
-                    <p className="text-xl font-black text-slate-900 tracking-tight">{customers.length}</p>
+                    <p className="text-base font-black text-slate-900 tracking-tight">{customers.length}</p>
                   </div>
                 </div>
 
@@ -873,16 +873,16 @@ export default function App() {
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/30 space-y-6"
+                  className="bg-white p-5 rounded-[1.5rem] border border-slate-100 shadow-lg shadow-slate-200/30 space-y-4"
                 >
-                  <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Debt Aging</h3>
-                  <div className="space-y-6">
-                    <div className="space-y-2">
+                  <h3 className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Debt Aging</h3>
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">0 - 7 Days</span>
-                        <span className="text-[11px] font-black text-emerald-500">{formatCurrency(stats.debtAging.recent)}</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">0 - 7 Days</span>
+                        <span className="text-[9px] font-black text-emerald-500">{formatCurrency(stats.debtAging.recent)}</span>
                       </div>
-                      <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                         <div 
                           className="bg-emerald-500 h-full" 
                           style={{ width: `${(stats.debtAging.recent / (stats.totalDebt || 1)) * 100}%` }} 
@@ -890,12 +890,12 @@ export default function App() {
                       </div>
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">8 - 30 Days</span>
-                        <span className="text-[11px] font-black text-amber-500">{formatCurrency(stats.debtAging.mid)}</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">8 - 30 Days</span>
+                        <span className="text-[9px] font-black text-amber-500">{formatCurrency(stats.debtAging.mid)}</span>
                       </div>
-                      <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                         <div 
                           className="bg-amber-500 h-full" 
                           style={{ width: `${(stats.debtAging.mid / (stats.totalDebt || 1)) * 100}%` }} 
@@ -903,12 +903,12 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">30+ Days</span>
-                        <span className="text-[11px] font-black text-red-500">{formatCurrency(stats.debtAging.old)}</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">30+ Days</span>
+                        <span className="text-[9px] font-black text-red-500">{formatCurrency(stats.debtAging.old)}</span>
                       </div>
-                      <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                         <div 
                           className="bg-red-500 h-full" 
                           style={{ width: `${(stats.debtAging.old / (stats.totalDebt || 1)) * 100}%` }} 
@@ -922,10 +922,10 @@ export default function App() {
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/30 space-y-5 pb-24"
+                  className="bg-white p-5 rounded-[1.5rem] border border-slate-100 shadow-lg shadow-slate-200/30 space-y-4 pb-24"
                 >
-                  <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Top Clients</h3>
-                  <div className="space-y-4">
+                  <h3 className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Top Clients</h3>
+                  <div className="space-y-3">
                     {stats.topCustomers.map((c, i) => (
                       <div 
                         key={c.id} 
@@ -933,10 +933,10 @@ export default function App() {
                           const customer = customers.find(cust => cust.id === c.id);
                           if (customer) selectCustomer(customer);
                         }}
-                        className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-4 rounded-[1.5rem] transition-all active:scale-[0.98] border border-transparent hover:border-slate-100"
+                        className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-3 rounded-[1.2rem] transition-all active:scale-[0.98] border border-transparent hover:border-slate-100"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm ${
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs ${
                             i === 0 ? 'bg-amber-500/20 text-amber-500' : 
                             i === 1 ? 'bg-slate-500/20 text-slate-400' : 
                             i === 2 ? 'bg-orange-500/20 text-orange-500' : 
@@ -944,9 +944,9 @@ export default function App() {
                           }`}>
                             {i + 1}
                           </div>
-                          <span className="font-black text-slate-900 text-lg tracking-tight">{c.name}</span>
+                          <span className="font-black text-slate-900 text-base tracking-tight">{c.name}</span>
                         </div>
-                        <span className="font-black text-emerald-500 text-lg tracking-tight">{formatCurrency(c.totalSpent)}</span>
+                        <span className="font-black text-emerald-500 text-base tracking-tight">{formatCurrency(c.totalSpent)}</span>
                       </div>
                     ))}
                   </div>
@@ -967,36 +967,36 @@ export default function App() {
                   </div>
                   <p className="text-xs font-black text-slate-500 uppercase tracking-[0.3em]">Customer Details</p>
                 </div>
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-2xl shadow-slate-200/40 space-y-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-3">Full Name</label>
+                <div className="bg-white p-5 rounded-[1.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 space-y-5">
+                  <div className="space-y-3.5">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2.5">Full Name</label>
                       <input 
                         type="text"
                         value={customerForm.name}
                         onChange={(e) => setCustomerForm({...customerForm, name: e.target.value})}
                         placeholder="Customer Name"
-                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.2rem] px-5 py-4 focus:outline-none focus:border-emerald-500/50 focus:bg-white transition-all text-base font-black text-slate-900 placeholder:text-slate-300"
+                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1rem] px-4 py-3 focus:outline-none focus:border-emerald-500/50 focus:bg-white transition-all text-sm font-black text-slate-900 placeholder:text-slate-300"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-3">Phone Number</label>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2.5">Phone Number</label>
                       <input 
                         type="tel"
                         value={customerForm.phone}
                         onChange={(e) => setCustomerForm({...customerForm, phone: e.target.value})}
                         placeholder="e.g. 70123456"
-                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.2rem] px-5 py-4 focus:outline-none focus:border-emerald-500/50 focus:bg-white transition-all text-base font-black text-slate-900 placeholder:text-slate-300"
+                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1rem] px-4 py-3 focus:outline-none focus:border-emerald-500/50 focus:bg-white transition-all text-sm font-black text-slate-900 placeholder:text-slate-300"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-3">Address</label>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2.5">Address</label>
                       <textarea 
                         value={customerForm.address}
                         onChange={(e) => setCustomerForm({...customerForm, address: e.target.value})}
                         placeholder="Delivery Address"
                         rows={2}
-                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.2rem] px-5 py-4 focus:outline-none focus:border-emerald-500/50 focus:bg-white transition-all text-base font-black text-slate-900 placeholder:text-slate-300"
+                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1rem] px-4 py-3 focus:outline-none focus:border-emerald-500/50 focus:bg-white transition-all text-sm font-black text-slate-900 placeholder:text-slate-300"
                       />
                     </div>
                   </div>
@@ -1025,22 +1025,22 @@ export default function App() {
                   <p className="text-sm font-black text-slate-400 uppercase tracking-[0.3em]">Client Profile</p>
                 </div>
                 {/* Profile Header */}
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 space-y-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-emerald-500 rounded-[1.5rem] flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-                      <User size={32} strokeWidth={2.5} />
+                <div className="bg-white p-5 rounded-[1.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-emerald-500 rounded-[1.2rem] flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                      <User size={28} strokeWidth={2.5} />
                     </div>
                     <div className="flex-1">
-                      <h2 className="text-xl font-black text-slate-900 leading-tight tracking-tight">{selectedCustomer.name}</h2>
-                      <div className="flex flex-col gap-1 mt-2">
+                      <h2 className="text-lg font-black text-slate-900 leading-tight tracking-tight">{selectedCustomer.name}</h2>
+                      <div className="flex flex-col gap-0.5 mt-1.5">
                         {selectedCustomer.phone && (
-                          <a href={`tel:${selectedCustomer.phone}`} className="text-[11px] font-black text-emerald-500 flex items-center gap-2">
-                            <Phone size={14} /> {selectedCustomer.phone}
+                          <a href={`tel:${selectedCustomer.phone}`} className="text-[10px] font-black text-emerald-500 flex items-center gap-1.5">
+                            <Phone size={12} /> {selectedCustomer.phone}
                           </a>
                         )}
                         {selectedCustomer.address && (
-                          <p className="text-[11px] font-bold text-slate-400 flex items-center gap-2">
-                            <MapPin size={14} /> {selectedCustomer.address}
+                          <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
+                            <MapPin size={12} /> {selectedCustomer.address}
                           </p>
                         )}
                       </div>
@@ -1076,139 +1076,139 @@ export default function App() {
                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Quick Categories</h3>
                     <span className="text-xs font-black text-emerald-500 bg-emerald-50 px-4 py-2 rounded-2xl">SELECT SHOP</span>
                   </div>
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-4 gap-2.5">
                     {[
-                      { name: 'Supermarket', icon: <Store size={20} />, color: 'bg-blue-500' },
-                      { name: 'Pharmacy', icon: <Plus size={20} />, color: 'bg-red-500' },
-                      { name: 'Bakery', icon: <Package size={20} />, color: 'bg-amber-500' },
-                      { name: 'Butcher', icon: <Package size={20} />, color: 'bg-rose-500' },
-                      { name: 'Roastery', icon: <Package size={20} />, color: 'bg-orange-500' },
-                      { name: 'Vegetables', icon: <Package size={20} />, color: 'bg-emerald-500' },
-                      { name: 'Restaurant', icon: <Store size={20} />, color: 'bg-indigo-500' },
-                      { name: 'Other', icon: <MoreVertical size={20} />, color: 'bg-slate-500' }
+                      { name: 'Supermarket', icon: <Store size={18} />, color: 'bg-blue-500' },
+                      { name: 'Pharmacy', icon: <Plus size={18} />, color: 'bg-red-500' },
+                      { name: 'Bakery', icon: <Package size={18} />, color: 'bg-amber-500' },
+                      { name: 'Butcher', icon: <Package size={18} />, color: 'bg-rose-500' },
+                      { name: 'Roastery', icon: <Package size={18} />, color: 'bg-orange-500' },
+                      { name: 'Vegetables', icon: <Package size={18} />, color: 'bg-emerald-500' },
+                      { name: 'Restaurant', icon: <Store size={18} />, color: 'bg-indigo-500' },
+                      { name: 'Other', icon: <MoreVertical size={18} />, color: 'bg-slate-500' }
                     ].map((cat) => (
                       <button
                         key={cat.name}
                         onClick={() => setShopName(cat.name)}
-                        className={`flex flex-col items-center justify-center p-4 rounded-[1.5rem] border-2 transition-all active:scale-90 ${
+                        className={`flex flex-col items-center justify-center p-3 rounded-[1.2rem] border-2 transition-all active:scale-90 ${
                           shopName === cat.name 
-                            ? `${cat.color} border-transparent text-white shadow-2xl shadow-${cat.color.split('-')[1]}-500/50` 
+                            ? `${cat.color} border-transparent text-white shadow-xl shadow-${cat.color.split('-')[1]}-500/40` 
                             : 'bg-slate-50 border-slate-50 text-slate-500 hover:border-emerald-100'
                         }`}
                       >
                         {cat.icon}
-                        <span className="text-[9px] font-black mt-2 uppercase tracking-tighter">{cat.name}</span>
+                        <span className="text-[8px] font-black mt-1.5 uppercase tracking-tighter">{cat.name}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* Add Item Form */}
-                <div className="bg-white p-6 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/30 space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Shop Name</label>
+                <div className="bg-white p-4 rounded-[1.5rem] border border-slate-100 shadow-lg shadow-slate-200/30 space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2.5">Shop Name</label>
                       <div className="relative">
                         <input 
                           type="text"
                           value={shopName}
                           onChange={(e) => setShopName(e.target.value)}
                           placeholder="e.g. Supermarket"
-                          className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.2rem] pl-4 pr-12 py-4 text-base font-black text-slate-900 focus:outline-none focus:border-emerald-500/50 transition-all"
+                          className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1rem] pl-3.5 pr-10 py-3 text-sm font-black text-slate-900 focus:outline-none focus:border-emerald-500/50 transition-all"
                         />
                         <button 
                           onClick={startVoiceCapture}
-                          className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-emerald-500'}`}
+                          className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-emerald-500'}`}
                         >
-                          <Mic size={18} />
+                          <Mic size={16} />
                         </button>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Price (L.L.)</label>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2.5">Price (L.L.)</label>
                       <input 
                         type="number"
                         inputMode="numeric"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
                         placeholder="0"
-                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1.2rem] px-4 py-4 text-base font-black text-slate-900 focus:outline-none focus:border-emerald-500/50 transition-all"
+                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1rem] px-3.5 py-3 text-sm font-black text-slate-900 focus:outline-none focus:border-emerald-500/50 transition-all"
                       />
                     </div>
                   </div>
                   <button 
                     onClick={addItemToOrder}
                     disabled={!shopName || !price}
-                    className="w-full bg-slate-900 text-white py-4 rounded-[1.2rem] font-black text-base shadow-xl shadow-slate-900/20 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30 disabled:active:scale-100"
+                    className="w-full bg-slate-900 text-white py-3 rounded-[1rem] font-black text-sm shadow-lg shadow-slate-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-30 disabled:active:scale-100"
                   >
-                    <Plus size={20} strokeWidth={3} />
+                    <Plus size={18} strokeWidth={3} />
                     Add to Bill
                   </button>
                 </div>
 
                 {/* Delivery Fee */}
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/30">
+                <div className="bg-white p-4 rounded-[1.2rem] border border-slate-100 shadow-lg shadow-slate-200/30">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-[1rem] flex items-center justify-center">
-                        <Calculator size={24} />
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-emerald-500/10 text-emerald-500 rounded-lg flex items-center justify-center">
+                        <Calculator size={20} />
                       </div>
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Delivery Fee</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Delivery Fee</label>
                     </div>
-                    <div className="relative w-40">
+                    <div className="relative w-32">
                       <input 
                         type="number"
                         inputMode="numeric"
                         value={deliveryFee}
                         onChange={(e) => setDeliveryFee(e.target.value)}
                         placeholder="0"
-                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-[1rem] pl-4 pr-12 py-4 text-lg font-black text-slate-900 text-right focus:outline-none focus:border-emerald-500/50 transition-all"
+                        className="w-full bg-slate-50 border-2 border-slate-50 rounded-lg pl-3 pr-10 py-3 text-base font-black text-slate-900 text-right focus:outline-none focus:border-emerald-500/50 transition-all"
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">LL</span>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300">LL</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Current Order Items */}
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between px-4">
-                    <div className="flex items-center gap-3">
-                      <ReceiptText size={28} className="text-emerald-500" />
-                      <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Items Detail</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between px-3">
+                    <div className="flex items-center gap-2.5">
+                      <ReceiptText size={22} className="text-emerald-500" />
+                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Items Detail</h3>
                     </div>
                     {currentItems.length > 0 && (
                       <button 
                         onClick={() => setCurrentItems([])}
-                        className="text-xs font-black text-red-500 uppercase tracking-widest flex items-center gap-2 hover:bg-red-50 px-4 py-2 rounded-2xl transition-colors"
+                        className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1.5 hover:bg-red-50 px-3 py-1.5 rounded-xl transition-colors"
                       >
-                        <RotateCcw size={16} /> Clear All
+                        <RotateCcw size={14} /> Clear All
                       </button>
                     )}
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {currentItems.map((item, index) => (
                       <motion.div 
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         key={index}
-                        className="bg-white p-5 rounded-[2rem] border border-slate-100 flex items-center justify-between shadow-sm"
+                        className="bg-white p-4 rounded-[1.2rem] border border-slate-100 flex items-center justify-between shadow-sm"
                       >
                         <div>
-                          <p className="font-black text-lg text-slate-900 tracking-tight">{item.shop}</p>
-                          <p className="text-emerald-500 font-black text-base">{formatCurrency(item.price)}</p>
+                          <p className="font-black text-base text-slate-900 tracking-tight">{item.shop}</p>
+                          <p className="text-emerald-500 font-black text-sm">{formatCurrency(item.price)}</p>
                         </div>
                         <button 
                           onClick={() => removeItemFromOrder(index)}
-                          className="p-4 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-[1.5rem] transition-all active:scale-90"
+                          className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-90"
                         >
-                          <Trash2 size={24} />
+                          <Trash2 size={20} />
                         </button>
                       </motion.div>
                     ))}
                   </div>
                   {currentItems.length === 0 && (
-                    <div className="text-center py-12 bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
-                      <p className="text-slate-300 font-black text-sm uppercase tracking-widest">No items added yet</p>
+                    <div className="text-center py-8 bg-white rounded-[1.5rem] border-2 border-dashed border-slate-100">
+                      <p className="text-slate-300 font-black text-xs uppercase tracking-widest">No items added yet</p>
                     </div>
                   )}
                 </div>
@@ -1216,25 +1216,25 @@ export default function App() {
                 {currentItems.length > 0 && (
                   <button 
                     onClick={submitOrder}
-                    className="w-full bg-emerald-500 text-white py-4 rounded-[1.5rem] font-black text-base shadow-2xl shadow-emerald-500/30 hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3"
+                    className="w-full bg-emerald-500 text-white py-3.5 rounded-[1.2rem] font-black text-sm shadow-xl shadow-emerald-500/30 hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-2.5"
                   >
-                    <CheckCircle2 size={24} strokeWidth={2.5} />
+                    <CheckCircle2 size={20} strokeWidth={2.5} />
                     Complete Order
                   </button>
                 )}
 
                 <div className="pb-24">
-                  <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest ml-4 mb-6">Recent Activity</h3>
-                  <div className="space-y-4">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3 mb-4">Recent Activity</h3>
+                  <div className="space-y-3">
                     {orders.filter(o => o.customerId === selectedCustomer.id).slice(0, 5).map(order => (
-                      <div key={order.id} className="bg-white p-6 rounded-[2rem] border border-slate-50 shadow-sm flex items-center justify-between">
+                      <div key={order.id} className="bg-white p-4 rounded-[1.2rem] border border-slate-50 shadow-sm flex items-center justify-between">
                         <div>
-                          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
                             {order.createdAt?.toDate().toLocaleDateString('en-LB', { month: 'short', day: 'numeric' })}
                           </p>
-                          <p className="font-black text-lg text-slate-900 tracking-tight">{formatCurrency(order.total)}</p>
+                          <p className="font-black text-base text-slate-900 tracking-tight">{formatCurrency(order.total)}</p>
                         </div>
-                        <div className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest ${
+                        <div className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${
                           order.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 
                           order.status === 'delivered' ? 'bg-blue-500/10 text-blue-500' : 
                           'bg-amber-500/10 text-amber-500'
@@ -1244,7 +1244,7 @@ export default function App() {
                       </div>
                     ))}
                     {orders.filter(o => o.customerId === selectedCustomer.id).length === 0 && (
-                      <p className="text-center py-6 text-slate-300 font-black italic text-xs uppercase tracking-widest">No orders yet</p>
+                      <p className="text-center py-4 text-slate-300 font-black italic text-[10px] uppercase tracking-widest">No orders yet</p>
                     )}
                   </div>
                 </div>
@@ -1262,10 +1262,10 @@ export default function App() {
                   <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Past Deliveries</p>
                 </div>
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between px-3">
-                    <div className="flex items-center gap-4">
-                      <History size={24} className="text-emerald-500" />
-                      <h3 className="text-base font-black text-slate-400 uppercase tracking-widest">Order History</h3>
+                  <div className="flex items-center justify-between px-2.5">
+                    <div className="flex items-center gap-3">
+                      <History size={20} className="text-emerald-500" />
+                      <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Order History</h3>
                     </div>
                     <button 
                       onClick={() => {
@@ -1275,28 +1275,28 @@ export default function App() {
                           setView('home');
                         }
                       }}
-                      className="bg-emerald-500 text-white px-6 py-3 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-emerald-500/30 active:scale-95 transition-all"
+                      className="bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
                     >
                       + New
                     </button>
                   </div>
 
                   {/* History Search & Filter */}
-                  <div className="flex gap-4">
+                  <div className="flex gap-3">
                     <div className="relative flex-1">
-                      <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={22} />
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input 
                         type="text"
                         value={historySearchQuery}
                         onChange={(e) => setHistorySearchQuery(e.target.value)}
                         placeholder="Search orders..."
-                        className="w-full bg-white border-2 border-slate-100 rounded-[2rem] pl-14 pr-6 py-5 focus:outline-none focus:border-emerald-500 transition-all text-lg font-black text-slate-900 shadow-xl shadow-slate-200/20"
+                        className="w-full bg-white border-2 border-slate-100 rounded-[1.2rem] pl-11 pr-5 py-3.5 focus:outline-none focus:border-emerald-500 transition-all text-sm font-black text-slate-900 shadow-lg shadow-slate-200/10"
                       />
                     </div>
                     <select 
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value as any)}
-                      className="bg-white border-2 border-slate-100 rounded-[2rem] px-6 py-5 text-sm font-black text-slate-500 focus:outline-none shadow-xl shadow-slate-200/20 uppercase tracking-widest"
+                      className="bg-white border-2 border-slate-100 rounded-[1.2rem] px-4 py-3.5 text-xs font-black text-slate-500 focus:outline-none shadow-lg shadow-slate-200/10 uppercase tracking-widest"
                     >
                       <option value="all">All</option>
                       <option value="pending">Pending</option>
@@ -1313,67 +1313,67 @@ export default function App() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       key={order.id} 
-                      className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-2xl shadow-slate-200/40 space-y-4 group"
+                      className="bg-white p-3.5 rounded-[1.5rem] border border-slate-100 shadow-xl shadow-slate-200/30 space-y-3.5 group"
                     >
                       <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-xl ${
+                        <div className="flex items-center gap-3.5">
+                          <div className={`p-2.5 rounded-lg ${
                             order.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 
                             order.status === 'delivered' ? 'bg-blue-500/10 text-blue-500' : 
                             'bg-amber-500/10 text-amber-500'
                           }`}>
-                            {order.status === 'paid' ? <CheckCircle size={20} /> : 
-                             order.status === 'delivered' ? <Package size={20} /> : 
-                             <Clock size={20} />}
+                            {order.status === 'paid' ? <CheckCircle size={18} /> : 
+                             order.status === 'delivered' ? <Package size={18} /> : 
+                             <Clock size={18} />}
                           </div>
                           <div>
-                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-2 mb-1">
+                            <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-1.5 mb-0.5">
                               {order.createdAt?.toDate().toLocaleDateString('en-LB', { month: 'short', day: 'numeric', year: 'numeric' })}
-                              <span className="w-1.5 h-1.5 bg-slate-200 rounded-full" />
+                              <span className="w-1 h-1 bg-slate-200 rounded-full" />
                               {order.customerName}
                             </p>
-                            <p className="text-xl font-black text-slate-900 tracking-tighter">{formatCurrency(order.total)}</p>
+                            <p className="text-lg font-black text-slate-900 tracking-tighter">{formatCurrency(order.total)}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <button 
                             onClick={() => shareToWhatsApp(order)}
-                            className="p-2 text-emerald-500 hover:bg-emerald-50 rounded-xl transition-all active:scale-90"
+                            className="p-1.5 text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all active:scale-90"
                             title="Share to WhatsApp"
                           >
-                            <MessageCircle size={20} />
+                            <MessageCircle size={18} />
                           </button>
                           <button 
                             onClick={() => copyToClipboard(order)}
-                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-all active:scale-90"
+                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-all active:scale-90"
                             title="Copy to Clipboard"
                           >
-                            <Copy size={20} />
+                            <Copy size={18} />
                           </button>
                           <button 
                             onClick={() => setConfirmDeleteOrderId(order.id)}
-                            className="p-2 text-slate-300 hover:text-red-500 transition-colors active:scale-90"
+                            className="p-1.5 text-slate-300 hover:text-red-500 transition-colors active:scale-90"
                           >
-                            <Trash2 size={20} />
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </div>
                       
-                      <div className="bg-slate-50 p-4 rounded-[1.5rem] space-y-3">
-                        <div className="flex justify-between items-center pb-2 border-b border-slate-200/50">
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                            <Clock size={12} /> {order.createdAt?.toDate().toLocaleString('en-LB', { dateStyle: 'short', timeStyle: 'short' })}
+                      <div className="bg-slate-50 p-3.5 rounded-[1.2rem] space-y-2.5">
+                        <div className="flex justify-between items-center pb-1.5 border-b border-slate-200/50">
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                            <Clock size={10} /> {order.createdAt?.toDate().toLocaleString('en-LB', { dateStyle: 'short', timeStyle: 'short' })}
                           </span>
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ID: {order.id.slice(-4)}</span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">ID: {order.id.slice(-4)}</span>
                         </div>
                         {order.items.map((item, i) => (
-                          <div key={i} className="flex justify-between text-xs items-center">
+                          <div key={i} className="flex justify-between text-[11px] items-center">
                             <span className="text-slate-500 font-black">{item.shop}</span>
                             <span className="font-black text-slate-900">{formatCurrency(item.price)}</span>
                           </div>
                         ))}
-                        <div className="pt-2 border-t border-slate-200/50 flex justify-between text-xs items-center">
-                          <span className="text-slate-400 font-black uppercase text-[9px] tracking-widest">Delivery Fee</span>
+                        <div className="pt-1.5 border-t border-slate-200/50 flex justify-between text-[11px] items-center">
+                          <span className="text-slate-400 font-black uppercase text-[8px] tracking-widest">Delivery Fee</span>
                           <span className="font-black text-emerald-500">{formatCurrency(order.deliveryFee)}</span>
                         </div>
                       </div>
@@ -1408,11 +1408,11 @@ export default function App() {
                     </motion.div>
                   ))}
                     {filteredOrders.length === 0 && (
-                      <div className="text-center py-12 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 flex flex-col items-center">
-                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-200">
-                          <Truck size={32} strokeWidth={1.5} />
+                      <div className="text-center py-8 bg-white rounded-[1.5rem] border-2 border-dashed border-slate-100 flex flex-col items-center">
+                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-slate-200">
+                          <Truck size={24} strokeWidth={1.5} />
                         </div>
-                        <p className="text-slate-400 font-black text-sm uppercase tracking-widest">No orders found</p>
+                        <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest">No orders found</p>
                       </div>
                     )}
                 </div>
@@ -1424,39 +1424,39 @@ export default function App() {
 
         {/* Bottom Nav */}
         {user && (
-          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-3 py-1 flex justify-around items-center z-30 shadow-lg">
+          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-3 py-0.5 flex justify-around items-center z-30 shadow-lg">
             <button 
               onClick={() => {
                 saveCurrentToDraft(selectedCustomer?.id);
                 setView('home');
               }}
-              className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-lg transition-all ${view === 'home' ? 'text-emerald-500' : 'text-slate-400'}`}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-1 rounded-lg transition-all ${view === 'home' ? 'text-emerald-500' : 'text-slate-400'}`}
             >
-              <User size={22} strokeWidth={view === 'home' ? 3 : 2} />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Clients</span>
-              {view === 'home' && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
+              <User size={18} strokeWidth={view === 'home' ? 3 : 2} />
+              <span className="text-[8px] font-bold uppercase tracking-widest">Clients</span>
+              {view === 'home' && <div className="w-1 h-1 bg-emerald-500 rounded-full" />}
             </button>
             <button 
               onClick={() => {
                 saveCurrentToDraft(selectedCustomer?.id);
                 setView('stats');
               }}
-              className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-lg transition-all ${view === 'stats' ? 'text-emerald-500' : 'text-slate-400'}`}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-1 rounded-lg transition-all ${view === 'stats' ? 'text-emerald-500' : 'text-slate-400'}`}
             >
-              <TrendingUp size={22} strokeWidth={view === 'stats' ? 3 : 2} />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Stats</span>
-              {view === 'stats' && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
+              <TrendingUp size={18} strokeWidth={view === 'stats' ? 3 : 2} />
+              <span className="text-[8px] font-bold uppercase tracking-widest">Stats</span>
+              {view === 'stats' && <div className="w-1 h-1 bg-emerald-500 rounded-full" />}
             </button>
             <button 
               onClick={() => {
                 saveCurrentToDraft(selectedCustomer?.id);
                 setView('history');
               }}
-              className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-lg transition-all ${view === 'history' ? 'text-emerald-500' : 'text-slate-400'}`}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-1 rounded-lg transition-all ${view === 'history' ? 'text-emerald-500' : 'text-slate-400'}`}
             >
-              <History size={22} strokeWidth={view === 'history' ? 3 : 2} />
-              <span className="text-[10px] font-bold uppercase tracking-widest">History</span>
-              {view === 'history' && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
+              <History size={18} strokeWidth={view === 'history' ? 3 : 2} />
+              <span className="text-[8px] font-bold uppercase tracking-widest">History</span>
+              {view === 'history' && <div className="w-1 h-1 bg-emerald-500 rounded-full" />}
             </button>
           </nav>
         )}
@@ -1468,24 +1468,24 @@ export default function App() {
               onClick={() => setConfirmDeleteId(null)}
               className="absolute inset-0 bg-black/80"
             />
-            <div className="bg-white w-full max-w-sm rounded-2xl p-8 relative z-10 shadow-2xl border border-slate-200">
-              <div className="bg-red-500/10 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mb-6">
-                <Trash2 size={32} />
+            <div className="bg-white w-full max-w-sm rounded-2xl p-6 relative z-10 shadow-2xl border border-slate-200">
+              <div className="bg-red-500/10 w-14 h-14 rounded-xl flex items-center justify-center text-red-500 mb-5">
+                <Trash2 size={28} />
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">Delete Client?</h3>
-              <p className="text-slate-500 mb-8 leading-relaxed">
+              <h3 className="text-xl font-bold text-slate-900 mb-1.5">Delete Client?</h3>
+              <p className="text-slate-500 mb-6 leading-relaxed text-sm">
                 Are you sure you want to remove this client? Their order history will remain, but the client record will be gone.
               </p>
-              <div className="flex gap-3">
+              <div className="flex gap-2.5">
                 <button 
                   onClick={() => setConfirmDeleteId(null)}
-                  className="flex-1 bg-slate-100 text-slate-600 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-slate-200 transition-colors"
+                  className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-lg font-bold uppercase tracking-widest text-[10px] hover:bg-slate-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={() => deleteCustomer(confirmDeleteId)}
-                  className="flex-1 bg-red-500 text-white py-4 rounded-xl font-bold uppercase tracking-widest text-xs shadow-sm hover:bg-red-600 transition-colors"
+                  className="flex-1 bg-red-500 text-white py-3 rounded-lg font-bold uppercase tracking-widest text-[10px] shadow-sm hover:bg-red-600 transition-colors"
                 >
                   Delete
                 </button>
@@ -1500,24 +1500,24 @@ export default function App() {
               onClick={() => setConfirmDeleteOrderId(null)}
               className="absolute inset-0 bg-black/80"
             />
-            <div className="bg-white w-full max-w-sm rounded-2xl p-8 relative z-10 shadow-2xl border border-slate-200">
-              <div className="bg-red-500/10 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mb-6">
-                <Trash2 size={32} />
+            <div className="bg-white w-full max-w-sm rounded-2xl p-6 relative z-10 shadow-2xl border border-slate-200">
+              <div className="bg-red-500/10 w-14 h-14 rounded-xl flex items-center justify-center text-red-500 mb-5">
+                <Trash2 size={28} />
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">Delete Order?</h3>
-              <p className="text-slate-500 mb-8 leading-relaxed">
+              <h3 className="text-xl font-bold text-slate-900 mb-1.5">Delete Order?</h3>
+              <p className="text-slate-500 mb-6 leading-relaxed text-sm">
                 Are you sure you want to delete this order? This action cannot be undone.
               </p>
-              <div className="flex gap-3">
+              <div className="flex gap-2.5">
                 <button 
                   onClick={() => setConfirmDeleteOrderId(null)}
-                  className="flex-1 bg-slate-100 text-slate-600 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-slate-200 transition-colors"
+                  className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-lg font-bold uppercase tracking-widest text-[10px] hover:bg-slate-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={() => deleteOrder(confirmDeleteOrderId)}
-                  className="flex-1 bg-red-500 text-white py-4 rounded-xl font-bold uppercase tracking-widest text-xs shadow-sm hover:bg-red-600 transition-colors"
+                  className="flex-1 bg-red-500 text-white py-3 rounded-lg font-bold uppercase tracking-widest text-[10px] shadow-sm hover:bg-red-600 transition-colors"
                 >
                   Delete
                 </button>
@@ -1532,24 +1532,24 @@ export default function App() {
               onClick={() => setConfirmMarkPaid(false)}
               className="absolute inset-0 bg-black/80"
             />
-            <div className="bg-white w-full max-w-sm rounded-2xl p-8 relative z-10 shadow-2xl border border-slate-200">
-              <div className="bg-emerald-500/10 w-16 h-16 rounded-2xl flex items-center justify-center text-emerald-500 mb-6">
-                <CheckCircle size={32} />
+            <div className="bg-white w-full max-w-sm rounded-2xl p-6 relative z-10 shadow-2xl border border-slate-200">
+              <div className="bg-emerald-500/10 w-14 h-14 rounded-xl flex items-center justify-center text-emerald-500 mb-5">
+                <CheckCircle size={28} />
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">Clear All Debt?</h3>
-              <p className="text-slate-500 mb-8 leading-relaxed">
+              <h3 className="text-xl font-bold text-slate-900 mb-1.5">Clear All Debt?</h3>
+              <p className="text-slate-500 mb-6 leading-relaxed text-sm">
                 Mark all outstanding orders for <strong>{selectedCustomer?.name}</strong> as paid?
               </p>
-              <div className="flex gap-3">
+              <div className="flex gap-2.5">
                 <button 
                   onClick={() => setConfirmMarkPaid(false)}
-                  className="flex-1 bg-slate-100 text-slate-600 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-slate-200 transition-colors"
+                  className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-lg font-bold uppercase tracking-widest text-[10px] hover:bg-slate-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={markAllAsPaid}
-                  className="flex-1 bg-emerald-500 text-white py-4 rounded-xl font-bold uppercase tracking-widest text-xs shadow-sm hover:bg-emerald-600 transition-colors"
+                  className="flex-1 bg-emerald-500 text-white py-3 rounded-lg font-bold uppercase tracking-widest text-[10px] shadow-sm hover:bg-emerald-600 transition-colors"
                 >
                   Confirm
                 </button>
