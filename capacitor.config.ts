@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.deliverysystem.app',
-  appName: 'Delivery System',
+  appName: 'DeliveryHelp',
   webDir: 'dist',
   server: {
     androidScheme: 'https'

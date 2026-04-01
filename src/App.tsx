@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { App as CapApp } from '@capacitor/app';
 import { 
   Plus, 
   Search, 
@@ -201,6 +202,7 @@ const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
 export default function App() {
   const user = { uid: 'default-user', displayName: 'User' };
   const [loading, setLoading] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
   const [view, setView] = useState<'home' | 'customer' | 'history' | 'add-customer' | 'customer-profile' | 'stats'>('home');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -221,9 +223,34 @@ export default function App() {
   const [currentItems, setCurrentItems] = useState<ShopItem[]>([]);
   const [shopName, setShopName] = useState('');
   const [price, setPrice] = useState('');
-  const [deliveryFee, setDeliveryFee] = useState('0');
+  const [deliveryFee, setDeliveryFee] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, { items: ShopItem[], fee: string }>>({});
+
+  // --- Splash Screen ---
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // --- Back Button Handling ---
+  useEffect(() => {
+    const backListener = CapApp.addListener('backButton', ({ canGoBack }) => {
+      if (view === 'customer-profile' || view === 'add-customer' || view === 'history' || view === 'stats') {
+        setView('home');
+        setSelectedCustomer(null);
+        setEditingCustomer(null);
+      } else if (view === 'home') {
+        CapApp.exitApp();
+      }
+    });
+
+    return () => {
+      backListener.then(l => l.remove());
+    };
+  }, [view]);
 
   const saveCurrentToDraft = (customerId: string | undefined) => {
     if (!customerId) return;
@@ -248,7 +275,7 @@ export default function App() {
     }
     
     // Load state for the NEW customer from the current drafts
-    const draft = drafts[customer.id] || { items: [], fee: '0' };
+    const draft = drafts[customer.id] || { items: [], fee: '' };
     setCurrentItems([...draft.items]);
     setDeliveryFee(draft.fee);
     setShopName('');
@@ -261,7 +288,7 @@ export default function App() {
     setCurrentItems([]);
     setShopName('');
     setPrice('');
-    setDeliveryFee('0');
+    setDeliveryFee('');
     setVoiceError(null);
     setIsListening(false);
     if (customerId) {
@@ -568,6 +595,49 @@ export default function App() {
     });
   }, [orders, historySearchQuery, statusFilter]);
 
+  if (showSplash) {
+    return (
+      <div className="min-h-screen bg-emerald-500 flex flex-col items-center justify-center p-6 text-white overflow-hidden relative">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-white rounded-full blur-3xl animate-pulse" />
+        </div>
+        
+        <div className="relative z-10 flex flex-col items-center animate-in fade-in zoom-in duration-700">
+          <div className="bg-white p-6 rounded-[2.5rem] shadow-2xl mb-8 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+            <img 
+              src="https://img.icons8.com/ios-filled/200/10B981/delivery-scooter.png" 
+              alt="Delivery Logo" 
+              className="w-24 h-24"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          
+          <h1 className="text-5xl font-black tracking-tighter mb-2 drop-shadow-lg">
+            Delivery<span className="text-emerald-100">Help</span>
+          </h1>
+          <p className="text-emerald-50 font-bold uppercase tracking-[0.3em] text-xs opacity-80">
+            Professional Logistics
+          </p>
+        </div>
+
+        <div className="absolute bottom-12 left-0 right-0 flex flex-col items-center gap-4">
+          <div className="w-12 h-1.5 bg-white/20 rounded-full overflow-hidden">
+            <div className="h-full bg-white animate-[loading_2.5s_ease-in-out]" />
+          </div>
+          <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Version 2.0.0</p>
+        </div>
+
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes loading {
+            0% { width: 0%; }
+            100% { width: 100%; }
+          }
+        `}} />
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -584,14 +654,14 @@ export default function App() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <h1 className="text-lg font-bold tracking-tight text-slate-900">
-                {view === 'home' ? 'Clients' : 
+                {view === 'home' ? 'DeliveryHelp' : 
                  view === 'stats' ? 'Statistics' :
                  view === 'add-customer' ? (editingCustomer ? 'Edit Client' : 'New Client') : 
                  view === 'customer-profile' ? 'Client Profile' :
                  selectedCustomer?.name}
               </h1>
               {view === 'home' && (
-                <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                   WELCOME, {user?.displayName?.split(' ')[0] || 'USER'}
                 </p>
               )}
@@ -601,12 +671,8 @@ export default function App() {
                 onClick={() => {
                   saveCurrentToDraft(selectedCustomer?.id);
                   setEditingCustomer(null);
-                  if (view === 'customer') {
-                    setView('customer-profile');
-                  } else {
-                    setView('home');
-                    setSelectedCustomer(null);
-                  }
+                  setView('home');
+                  setSelectedCustomer(null);
                 }}
                 className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors active:scale-95 text-slate-600"
               >
@@ -621,15 +687,15 @@ export default function App() {
             {view === 'home' && (
               <div key="home" className="space-y-3">
                 {/* Summary Card */}
-                <div className="bg-white rounded-xl p-2 text-slate-900 shadow-sm border border-slate-200">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="border-r border-slate-100 pr-2">
-                      <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Admin Outstanding</p>
-                      <p className="text-sm font-bold">LL {stats.totalDebt.toLocaleString()}</p>
+                <div className="bg-white rounded-xl p-3 text-slate-900 shadow-sm border border-slate-200">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="border-r border-slate-100 pr-3">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Admin Outstanding</p>
+                      <p className="text-base font-bold">LL {stats.totalDebt.toLocaleString()}</p>
                     </div>
-                    <div className="pl-2">
-                      <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Total Clients</p>
-                      <p className="text-sm font-bold">{customers.length}</p>
+                    <div className="pl-3">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Clients</p>
+                      <p className="text-base font-bold">{customers.length}</p>
                     </div>
                   </div>
                 </div>
@@ -637,20 +703,20 @@ export default function App() {
                 {/* Search & Add */}
                 <div className="relative">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={12} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
                     <input 
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search clients..."
-                      className="w-full bg-white border border-slate-200 rounded-lg pl-8 pr-8 py-1 focus:outline-none focus:border-emerald-500 transition-colors text-[10px] text-slate-900"
+                      className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-9 py-2 focus:outline-none focus:border-emerald-500 transition-colors text-sm text-slate-900"
                     />
                     {searchQuery && (
                       <button 
                         onClick={() => setSearchQuery('')}
                         className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-500"
                       >
-                        <X size={10} />
+                        <X size={14} />
                       </button>
                     )}
                   </div>
@@ -660,9 +726,9 @@ export default function App() {
                       setCustomerForm({ name: '', phone: '', address: '' });
                       setView('add-customer');
                     }}
-                    className="absolute -right-1 -top-4 bg-emerald-500 text-white p-2 rounded-full shadow-lg shadow-emerald-500/20 active:scale-95 z-10"
+                    className="absolute -right-1 -top-4 bg-emerald-500 text-white p-2.5 rounded-full shadow-lg shadow-emerald-500/20 active:scale-95 z-10"
                   >
-                    <Plus size={16} strokeWidth={3} />
+                    <Plus size={20} strokeWidth={3} />
                   </button>
                 </div>
 
@@ -671,25 +737,24 @@ export default function App() {
                   {filteredCustomers.map(customer => (
                     <div
                       key={customer.id}
-                      className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between active:bg-slate-50 transition-colors relative group"
+                      className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between active:bg-slate-50 transition-colors relative group"
                     >
                       <div 
                         onClick={() => selectCustomer(customer)}
                         className="flex-1 cursor-pointer"
                       >
-                        <div className="flex justify-between items-start mb-1">
-                          <p className="font-bold text-xs text-slate-900 leading-tight">{customer.name}</p>
-                          <div className="flex items-center gap-1">
+                        <div className="flex justify-between items-start mb-1.5">
+                          <p className="font-bold text-sm text-slate-900 leading-tight">{customer.name}</p>
+                          <div className="flex items-center gap-1.5">
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedCustomer(customer);
-                                setView('customer');
+                                selectCustomer(customer);
                               }}
-                              className="p-1.5 bg-emerald-500 text-white rounded-lg shadow-sm active:scale-90 transition-all"
+                              className="p-2 bg-emerald-500 text-white rounded-lg shadow-sm active:scale-90 transition-all"
                               title="New Order"
                             >
-                              <Plus size={10} strokeWidth={4} />
+                              <Plus size={12} strokeWidth={4} />
                             </button>
                             <button 
                               onClick={(e) => {
@@ -698,25 +763,25 @@ export default function App() {
                               }}
                               className="text-red-400/30 hover:text-red-400 p-1"
                             >
-                              <Trash2 size={12} />
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
                           {customer.unpaidBalance > 0 ? (
-                            <div className="bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded-md">
-                              <span className="text-[8px] font-bold uppercase tracking-widest">
+                            <div className="bg-red-500/10 text-red-500 px-2 py-0.5 rounded-md">
+                              <span className="text-[10px] font-bold uppercase tracking-widest">
                                 LL {customer.unpaidBalance.toLocaleString()}
                               </span>
                             </div>
                           ) : (
-                            <div className="bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded-md">
-                              <span className="text-[8px] font-bold uppercase tracking-widest">
+                            <div className="bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-md">
+                              <span className="text-[10px] font-bold uppercase tracking-widest">
                                 0 Clear
                               </span>
                             </div>
                           )}
-                          <span className="text-[7px] font-medium text-slate-500">
+                          <span className="text-[9px] font-medium text-slate-500">
                             Last: {orders.filter(o => o.customerId === customer.id)[0]?.createdAt?.toDate().toISOString().split('T')[0] || '0000-00-00'}
                           </span>
                         </div>
@@ -822,48 +887,48 @@ export default function App() {
                 </div>
 
                 {/* Debt Aging */}
-                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm space-y-2">
-                  <h3 className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Debt Aging</h3>
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[8px] font-bold text-slate-400">0 - 7 Days</span>
-                      <span className="text-[8px] font-bold text-emerald-500">{formatCurrency(stats.debtAging.recent)}</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
-                      <div 
-                        className="bg-emerald-500 h-full" 
-                        style={{ width: `${(stats.debtAging.recent / (stats.totalDebt || 1)) * 100}%` }} 
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-[8px] font-bold text-slate-400">8 - 30 Days</span>
-                      <span className="text-[8px] font-bold text-amber-500">{formatCurrency(stats.debtAging.mid)}</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
-                      <div 
-                        className="bg-amber-500 h-full" 
-                        style={{ width: `${(stats.debtAging.mid / (stats.totalDebt || 1)) * 100}%` }} 
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-[8px] font-bold text-slate-400">30+ Days</span>
-                      <span className="text-[8px] font-bold text-red-500">{formatCurrency(stats.debtAging.old)}</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
-                      <div 
-                        className="bg-red-500 h-full" 
-                        style={{ width: `${(stats.debtAging.old / (stats.totalDebt || 1)) * 100}%` }} 
-                      />
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Debt Aging</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-400">0 - 7 Days</span>
+                        <span className="text-[10px] font-bold text-emerald-500">{formatCurrency(stats.debtAging.recent)}</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div 
+                          className="bg-emerald-500 h-full" 
+                          style={{ width: `${(stats.debtAging.recent / (stats.totalDebt || 1)) * 100}%` }} 
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-400">8 - 30 Days</span>
+                        <span className="text-[10px] font-bold text-amber-500">{formatCurrency(stats.debtAging.mid)}</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div 
+                          className="bg-amber-500 h-full" 
+                          style={{ width: `${(stats.debtAging.mid / (stats.totalDebt || 1)) * 100}%` }} 
+                        />
+                      </div>
+  
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-400">30+ Days</span>
+                        <span className="text-[10px] font-bold text-red-500">{formatCurrency(stats.debtAging.old)}</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div 
+                          className="bg-red-500 h-full" 
+                          style={{ width: `${(stats.debtAging.old / (stats.totalDebt || 1)) * 100}%` }} 
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
 
                 {/* Top Clients */}
-                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
-                  <h3 className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Top Clients</h3>
-                  <div className="space-y-1">
+                <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                  <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Top Clients</h3>
+                  <div className="space-y-2">
                     {stats.topCustomers.map((c, i) => (
                       <div 
                         key={c.id} 
@@ -871,10 +936,10 @@ export default function App() {
                           const customer = customers.find(cust => cust.id === c.id);
                           if (customer) selectCustomer(customer);
                         }}
-                        className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors"
+                        className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg transition-colors"
                       >
-                        <div className="flex items-center gap-1.5">
-                          <div className={`w-4 h-4 rounded flex items-center justify-center font-bold text-[8px] ${
+                        <div className="flex items-center gap-2">
+                          <div className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] ${
                             i === 0 ? 'bg-amber-500/20 text-amber-500' : 
                             i === 1 ? 'bg-slate-500/20 text-slate-400' : 
                             i === 2 ? 'bg-orange-500/20 text-orange-500' : 
@@ -882,9 +947,9 @@ export default function App() {
                           }`}>
                             {i + 1}
                           </div>
-                          <span className="font-bold text-slate-600 text-[10px]">{c.name}</span>
+                          <span className="font-bold text-slate-600 text-sm">{c.name}</span>
                         </div>
-                        <span className="font-bold text-slate-900 text-[10px]">{formatCurrency(c.totalSpent)}</span>
+                        <span className="font-bold text-slate-900 text-sm">{formatCurrency(c.totalSpent)}</span>
                       </div>
                     ))}
                   </div>
@@ -903,44 +968,44 @@ export default function App() {
                   />
                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Customer Details</p>
                 </div>
-                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm space-y-2">
-                  <div className="space-y-1.5">
-                    <div className="space-y-0.5">
-                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
+                <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                  <div className="space-y-2">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
                       <input 
                         type="text"
                         value={customerForm.name}
                         onChange={(e) => setCustomerForm({...customerForm, name: e.target.value})}
                         placeholder="Customer Name"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-emerald-500/20 text-[10px] font-medium text-slate-900 placeholder:text-slate-400"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium text-slate-900 placeholder:text-slate-400"
                       />
                     </div>
-                    <div className="space-y-0.5">
-                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
                       <input 
                         type="tel"
                         value={customerForm.phone}
                         onChange={(e) => setCustomerForm({...customerForm, phone: e.target.value})}
                         placeholder="e.g. 70123456"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-emerald-500/20 text-[10px] font-medium text-slate-900 placeholder:text-slate-400"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium text-slate-900 placeholder:text-slate-400"
                       />
                     </div>
-                    <div className="space-y-0.5">
-                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Address</label>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Address</label>
                       <textarea 
                         value={customerForm.address}
                         onChange={(e) => setCustomerForm({...customerForm, address: e.target.value})}
                         placeholder="Delivery Address"
                         rows={1}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-emerald-500/20 text-[10px] font-medium text-slate-900 placeholder:text-slate-400"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium text-slate-900 placeholder:text-slate-400"
                       />
                     </div>
                   </div>
                   <button 
                     onClick={saveCustomer}
-                    className="w-full bg-emerald-500 text-white py-2 rounded-xl font-black text-[10px] shadow-lg shadow-emerald-500/10 hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-1"
+                    className="w-full bg-emerald-500 text-white py-3 rounded-xl font-black text-sm shadow-lg shadow-emerald-500/10 hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <Check size={14} />
+                    <Check size={18} />
                     {editingCustomer ? 'Update Customer' : 'Save Customer'}
                   </button>
                 </div>
@@ -959,95 +1024,49 @@ export default function App() {
                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Client Profile</p>
                 </div>
                 {/* Profile Header */}
-                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white shadow-sm">
-                      <User size={16} />
+                <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center text-white shadow-sm">
+                      <User size={20} />
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-slate-900 leading-tight">{selectedCustomer.name}</h2>
-                      <div className="flex flex-col gap-0.5 mt-0.5">
+                      <h2 className="text-base font-bold text-slate-900 leading-tight">{selectedCustomer.name}</h2>
+                      <div className="flex flex-col gap-1 mt-1">
                         {selectedCustomer.phone && (
-                          <a href={`tel:${selectedCustomer.phone}`} className="text-[8px] font-bold text-emerald-500 flex items-center gap-1">
-                            <Phone size={7} /> {selectedCustomer.phone}
+                          <a href={`tel:${selectedCustomer.phone}`} className="text-[10px] font-bold text-emerald-500 flex items-center gap-1.5">
+                            <Phone size={10} /> {selectedCustomer.phone}
                           </a>
                         )}
                         {selectedCustomer.address && (
-                          <p className="text-[8px] font-medium text-slate-400 flex items-center gap-1">
-                            <MapPin size={7} /> {selectedCustomer.address}
+                          <p className="text-[10px] font-medium text-slate-400 flex items-center gap-1.5">
+                            <MapPin size={10} /> {selectedCustomer.address}
                           </p>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-                    <div className="bg-slate-50 p-1.5 rounded-lg">
-                      <p className="text-[6px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Total Spent</p>
-                      <p className="text-[9px] font-bold text-slate-900">{formatCurrency(stats.customerStats?.totalSpent || 0)}</p>
+                  <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
+                    <div className="bg-slate-50 p-2 rounded-lg">
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Spent</p>
+                      <p className="text-sm font-bold text-slate-900">{formatCurrency(stats.customerStats?.totalSpent || 0)}</p>
                     </div>
-                    <div className="bg-slate-50 p-1.5 rounded-lg">
-                      <p className="text-[6px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Orders</p>
-                      <p className="text-[9px] font-bold text-slate-900">{stats.customerStats?.orderCount || 0}</p>
+                    <div className="bg-slate-50 p-2 rounded-lg">
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Orders</p>
+                      <p className="text-sm font-bold text-slate-900">{stats.customerStats?.orderCount || 0}</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => setView('customer')}
-                      className="flex-1 bg-emerald-500 text-white py-1.5 rounded-xl font-bold text-[9px] shadow-sm hover:bg-emerald-600 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Plus size={12} />
-                      New Order
-                    </button>
+                  <div className="flex gap-3">
                     {stats.customerStats?.totalSpent && stats.customerStats.totalSpent > 0 && (
                       <button 
                         onClick={() => setConfirmMarkPaid(true)}
-                        className="bg-slate-100 text-slate-600 px-2 rounded-xl font-bold text-[7px] uppercase tracking-widest hover:bg-slate-200 transition-colors"
+                        className="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-colors"
                       >
                         Clear Debt
                       </button>
                     )}
                   </div>
-                </div>
-
-                {/* Recent Orders for this customer */}
-                <div className="space-y-2">
-                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Recent Activity</h3>
-                  {orders.filter(o => o.customerId === selectedCustomer.id).slice(0, 5).map(order => (
-                    <div key={order.id} className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                      <div>
-                        <p className="text-[8px] font-bold text-slate-500 uppercase">
-                          {order.createdAt?.toDate().toLocaleDateString('en-LB', { month: 'short', day: 'numeric' })}
-                        </p>
-                        <p className="font-bold text-sm text-slate-900">{formatCurrency(order.total)}</p>
-                      </div>
-                      <div className={`px-1.5 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest ${
-                        order.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 
-                        order.status === 'delivered' ? 'bg-blue-500/10 text-blue-500' : 
-                        'bg-amber-500/10 text-amber-500'
-                      }`}>
-                        {order.status}
-                      </div>
-                    </div>
-                  ))}
-                  {orders.filter(o => o.customerId === selectedCustomer.id).length === 0 && (
-                    <p className="text-center py-4 text-slate-500 font-bold italic text-[10px]">No orders yet</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {view === 'customer' && selectedCustomer && (
-              <div key="customer" className="space-y-3">
-                <div className="flex flex-col items-center justify-center py-1">
-                  <img 
-                    src="https://img.icons8.com/ios-filled/100/000000/delivery-scooter.png" 
-                    alt="Delivery Logo" 
-                    className="w-10 h-10 mb-1 opacity-10"
-                    referrerPolicy="no-referrer"
-                  />
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">New Order</p>
                 </div>
 
                 {/* Quick Categories */}
@@ -1141,6 +1160,7 @@ export default function App() {
                         inputMode="numeric"
                         value={deliveryFee}
                         onChange={(e) => setDeliveryFee(e.target.value)}
+                        placeholder="0"
                         className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-2 pr-6 py-1 text-[10px] font-bold text-slate-900 text-right focus:ring-2 focus:ring-emerald-500/20"
                       />
                       <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[7px] font-bold text-slate-400">LL</span>
@@ -1199,8 +1219,36 @@ export default function App() {
                     Complete Order
                   </button>
                 )}
+
+                <div className="pb-20">
+                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 mb-2">Recent Activity</h3>
+                  <div className="space-y-2">
+                    {orders.filter(o => o.customerId === selectedCustomer.id).slice(0, 5).map(order => (
+                      <div key={order.id} className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                          <p className="text-[8px] font-bold text-slate-500 uppercase">
+                            {order.createdAt?.toDate().toLocaleDateString('en-LB', { month: 'short', day: 'numeric' })}
+                          </p>
+                          <p className="font-bold text-sm text-slate-900">{formatCurrency(order.total)}</p>
+                        </div>
+                        <div className={`px-1.5 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest ${
+                          order.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 
+                          order.status === 'delivered' ? 'bg-blue-500/10 text-blue-500' : 
+                          'bg-amber-500/10 text-amber-500'
+                        }`}>
+                          {order.status}
+                        </div>
+                      </div>
+                    ))}
+                    {orders.filter(o => o.customerId === selectedCustomer.id).length === 0 && (
+                      <p className="text-center py-4 text-slate-500 font-bold italic text-[10px]">No orders yet</p>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
+
+            {/* Combined View handled in customer-profile */}
 
             {view === 'history' && (
               <div key="history" className="space-y-4">
@@ -1211,44 +1259,44 @@ export default function App() {
                     className="w-10 h-10 mb-1 opacity-20"
                     referrerPolicy="no-referrer"
                   />
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Past Deliveries</p>
+                  <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Past Deliveries</p>
                 </div>
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-1.5">
-                      <History size={14} className="text-emerald-500" />
-                      <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Order History</h3>
+                    <div className="flex items-center gap-2">
+                      <History size={16} className="text-emerald-500" />
+                      <h3 className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Order History</h3>
                     </div>
                     <button 
                       onClick={() => {
                         if (selectedCustomer) {
-                          setView('customer');
+                          setView('customer-profile');
                         } else {
                           setView('home');
                         }
                       }}
-                      className="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded-lg font-black text-[9px] uppercase tracking-wider hover:bg-emerald-500/20 transition-all"
+                      className="bg-emerald-500/10 text-emerald-500 px-3 py-1.5 rounded-lg font-black text-[11px] uppercase tracking-wider hover:bg-emerald-500/20 transition-all"
                     >
                       + New
                     </button>
                   </div>
 
                   {/* History Search & Filter */}
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input 
                         type="text"
                         value={historySearchQuery}
                         onChange={(e) => setHistorySearchQuery(e.target.value)}
                         placeholder="Search orders..."
-                        className="w-full bg-white border border-slate-200 rounded-xl pl-8 pr-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 shadow-sm text-[11px] text-slate-900 placeholder:text-slate-400"
+                        className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 shadow-sm text-sm text-slate-900 placeholder:text-slate-400"
                       />
                     </div>
                     <select 
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value as any)}
-                      className="bg-white border border-slate-200 rounded-xl px-2 py-1.5 text-[9px] font-bold text-slate-500 focus:outline-none shadow-sm"
+                      className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold text-slate-500 focus:outline-none shadow-sm"
                     >
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>
@@ -1258,95 +1306,95 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="space-y-3 pb-20">
+                <div className="space-y-4 pb-24">
                   {filteredOrders.map(order => (
-                    <div key={order.id} className="bg-white p-2 rounded-2xl border border-slate-200 shadow-sm space-y-2 group">
+                    <div key={order.id} className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-3 group">
                       <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-2">
-                          <div className={`p-1 rounded-lg ${
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-xl ${
                             order.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 
                             order.status === 'delivered' ? 'bg-blue-500/10 text-blue-500' : 
                             'bg-amber-500/10 text-amber-500'
                           }`}>
-                            {order.status === 'paid' ? <CheckCircle size={12} /> : 
-                             order.status === 'delivered' ? <Package size={12} /> : 
-                             <Clock size={12} />}
+                            {order.status === 'paid' ? <CheckCircle size={16} /> : 
+                             order.status === 'delivered' ? <Package size={16} /> : 
+                             <Clock size={16} />}
                           </div>
                           <div>
-                            <p className="text-[7px] text-slate-400 font-bold uppercase tracking-tighter flex items-center gap-1">
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter flex items-center gap-1.5">
                               {order.createdAt?.toDate().toLocaleDateString('en-LB', { month: 'short', day: 'numeric', year: 'numeric' })}
                               <span className="w-1 h-1 bg-slate-200 rounded-full" />
                               {order.customerName}
                             </p>
-                            <p className="text-base font-black text-slate-900 tracking-tighter">{formatCurrency(order.total)}</p>
+                            <p className="text-lg font-black text-slate-900 tracking-tighter">{formatCurrency(order.total)}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-0.5">
+                        <div className="flex items-center gap-1">
                           <button 
                             onClick={() => shareToWhatsApp(order)}
-                            className="p-1 text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all"
+                            className="p-1.5 text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all"
                             title="Share to WhatsApp"
                           >
-                            <MessageCircle size={14} />
+                            <MessageCircle size={18} />
                           </button>
                           <button 
                             onClick={() => copyToClipboard(order)}
-                            className="p-1 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
                             title="Copy to Clipboard"
                           >
-                            <Copy size={14} />
+                            <Copy size={18} />
                           </button>
                           <button 
                             onClick={() => setConfirmDeleteOrderId(order.id)}
-                            className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </div>
                       
-                      <div className="bg-slate-50 p-1.5 rounded-xl space-y-1">
-                        <div className="flex justify-between items-center pb-0.5 border-b border-slate-100">
-                          <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                            <Clock size={7} /> {order.createdAt?.toDate().toLocaleString('en-LB', { dateStyle: 'short', timeStyle: 'short' })}
+                      <div className="bg-slate-50 p-2.5 rounded-xl space-y-2">
+                        <div className="flex justify-between items-center pb-1 border-b border-slate-100">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                            <Clock size={10} /> {order.createdAt?.toDate().toLocaleString('en-LB', { dateStyle: 'short', timeStyle: 'short' })}
                           </span>
-                          <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">ID: {order.id.slice(-4)}</span>
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ID: {order.id.slice(-4)}</span>
                         </div>
                         {order.items.map((item, i) => (
-                          <div key={i} className="flex justify-between text-[9px] items-center">
+                          <div key={i} className="flex justify-between text-xs items-center">
                             <span className="text-slate-500 font-medium">{item.shop}</span>
                             <span className="font-black text-slate-900">{formatCurrency(item.price)}</span>
                           </div>
                         ))}
-                        <div className="pt-0.5 border-t border-slate-100 flex justify-between text-[9px] items-center">
-                          <span className="text-slate-400 font-bold uppercase text-[7px]">Delivery Fee</span>
+                        <div className="pt-1 border-t border-slate-100 flex justify-between text-xs items-center">
+                          <span className="text-slate-400 font-bold uppercase text-[9px]">Delivery Fee</span>
                           <span className="font-black text-emerald-500">{formatCurrency(order.deliveryFee)}</span>
                         </div>
                       </div>
 
                       {/* Status Update Actions */}
-                      <div className="flex gap-1.5 pt-0.5">
+                      <div className="flex gap-2 pt-1">
                         {order.status === 'pending' && (
                           <button 
                             onClick={() => updateOrderStatus(order.id, 'delivered')}
-                            className="flex-1 bg-blue-500 text-white py-1 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-1"
+                            className="flex-1 bg-blue-500 text-white py-2 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
                           >
-                            <Package size={10} />
+                            <Package size={14} />
                             Mark Delivered
                           </button>
                         )}
                         {order.status === 'delivered' && (
                           <button 
                             onClick={() => updateOrderStatus(order.id, 'paid')}
-                            className="flex-1 bg-emerald-500 text-white py-1 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center gap-1"
+                            className="flex-1 bg-emerald-500 text-white py-2 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center gap-2"
                           >
-                            <CreditCard size={10} />
+                            <CreditCard size={14} />
                             Mark Paid
                           </button>
                         )}
                         {order.status === 'paid' && (
-                          <div className="flex-1 bg-emerald-500/10 text-emerald-500 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1 border border-emerald-500/20">
-                            <CheckCircle size={10} />
+                          <div className="flex-1 bg-emerald-500/10 text-emerald-500 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-emerald-500/20">
+                            <CheckCircle size={14} />
                             Payment Received
                           </div>
                         )}
@@ -1372,39 +1420,39 @@ export default function App() {
 
         {/* Bottom Nav */}
         {user && (
-          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-0.5 flex justify-around items-center z-30 shadow-lg">
+          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-3 py-1 flex justify-around items-center z-30 shadow-lg">
             <button 
               onClick={() => {
                 saveCurrentToDraft(selectedCustomer?.id);
                 setView('home');
               }}
-              className={`flex-1 flex flex-col items-center gap-0.5 py-0.5 rounded-lg transition-all ${view === 'home' ? 'text-emerald-500' : 'text-slate-400'}`}
+              className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-lg transition-all ${view === 'home' ? 'text-emerald-500' : 'text-slate-400'}`}
             >
-              <User size={18} strokeWidth={view === 'home' ? 3 : 2} />
-              <span className="text-[8px] font-bold uppercase tracking-widest">Clients</span>
-              {view === 'home' && <div className="w-1 h-1 bg-emerald-500 rounded-full" />}
+              <User size={22} strokeWidth={view === 'home' ? 3 : 2} />
+              <span className="text-[10px] font-bold uppercase tracking-widest">Clients</span>
+              {view === 'home' && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
             </button>
             <button 
               onClick={() => {
                 saveCurrentToDraft(selectedCustomer?.id);
                 setView('stats');
               }}
-              className={`flex-1 flex flex-col items-center gap-0.5 py-0.5 rounded-lg transition-all ${view === 'stats' ? 'text-emerald-500' : 'text-slate-400'}`}
+              className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-lg transition-all ${view === 'stats' ? 'text-emerald-500' : 'text-slate-400'}`}
             >
-              <TrendingUp size={18} strokeWidth={view === 'stats' ? 3 : 2} />
-              <span className="text-[8px] font-bold uppercase tracking-widest">Stats</span>
-              {view === 'stats' && <div className="w-1 h-1 bg-emerald-500 rounded-full" />}
+              <TrendingUp size={22} strokeWidth={view === 'stats' ? 3 : 2} />
+              <span className="text-[10px] font-bold uppercase tracking-widest">Stats</span>
+              {view === 'stats' && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
             </button>
             <button 
               onClick={() => {
                 saveCurrentToDraft(selectedCustomer?.id);
                 setView('history');
               }}
-              className={`flex-1 flex flex-col items-center gap-0.5 py-0.5 rounded-lg transition-all ${view === 'history' ? 'text-emerald-500' : 'text-slate-400'}`}
+              className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-lg transition-all ${view === 'history' ? 'text-emerald-500' : 'text-slate-400'}`}
             >
-              <History size={18} strokeWidth={view === 'history' ? 3 : 2} />
-              <span className="text-[8px] font-bold uppercase tracking-widest">History</span>
-              {view === 'history' && <div className="w-1 h-1 bg-emerald-500 rounded-full" />}
+              <History size={22} strokeWidth={view === 'history' ? 3 : 2} />
+              <span className="text-[10px] font-bold uppercase tracking-widest">History</span>
+              {view === 'history' && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
             </button>
           </nav>
         )}
