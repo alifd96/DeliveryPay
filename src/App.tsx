@@ -19,6 +19,7 @@ import {
   ChevronRight,
   ArrowLeft,
   CheckCircle2,
+  BarChart3,
   AlertCircle,
   Wallet,
   ReceiptText,
@@ -539,85 +540,106 @@ export default function App() {
 
   // --- Helpers ---
 
-  const filteredCustomers = useMemo(() => {
-    const list = customers
-      .filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
-      .map(customer => {
-        const customerOrders = orders.filter(o => o.customerId === customer.id);
-        const unpaidOrders = customerOrders.filter(o => o.status !== 'paid');
-        const unpaidBalance = unpaidOrders.reduce((sum, o) => sum + o.total, 0);
-        
-        let oldestDebtDays = 0;
-        if (unpaidOrders.length > 0) {
-          const oldestDate = new Date(Math.min(...unpaidOrders.map(o => o.createdAt?.toDate().getTime() || Date.now())));
-          oldestDebtDays = Math.floor((Date.now() - oldestDate.getTime()) / (1000 * 60 * 60 * 24));
+  const stats = useMemo(() => {
+    let totalEarned = 0;
+    let totalDebt = 0;
+    const customerStatsMap: Record<string, { totalSpent: number; orderCount: number; unpaidBalance: number; oldestDebtTime: number }> = {};
+    
+    customers.forEach(c => {
+      customerStatsMap[c.id] = { totalSpent: 0, orderCount: 0, unpaidBalance: 0, oldestDebtTime: Infinity };
+    });
+
+    const now = Date.now();
+    const dayMs = 1000 * 60 * 60 * 24;
+    const debtAging = { recent: 0, mid: 0, old: 0 };
+    
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      return d.toISOString().split('T')[0];
+    }).reverse();
+    
+    const dayTotals: Record<string, number> = {};
+    last7Days.forEach(d => dayTotals[d] = 0);
+
+    orders.forEach(o => {
+      const amount = o.total || 0;
+      const isPaid = o.status === 'paid';
+      
+      if (isPaid) {
+        totalEarned += amount;
+      } else {
+        totalDebt += amount;
+        const orderTime = o.createdAt?.toDate().getTime() || now;
+        const days = Math.floor((now - orderTime) / dayMs);
+        if (days <= 7) debtAging.recent += amount;
+        else if (days <= 30) debtAging.mid += amount;
+        else debtAging.old += amount;
+
+        if (o.customerId && customerStatsMap[o.customerId]) {
+          customerStatsMap[o.customerId].unpaidBalance += amount;
+          if (orderTime < customerStatsMap[o.customerId].oldestDebtTime) {
+            customerStatsMap[o.customerId].oldestDebtTime = orderTime;
+          }
         }
+      }
 
+      if (o.customerId && customerStatsMap[o.customerId]) {
+        customerStatsMap[o.customerId].totalSpent += amount;
+        customerStatsMap[o.customerId].orderCount += 1;
+      }
+
+      const dateStr = o.createdAt?.toDate().toISOString().split('T')[0];
+      if (dateStr && dayTotals[dateStr] !== undefined) {
+        dayTotals[dateStr] += amount;
+      }
+    });
+
+    const chartData = last7Days.map(date => ({
+      date: new Date(date).toLocaleDateString('en-LB', { weekday: 'short' }),
+      amount: dayTotals[date]
+    }));
+
+    const topCustomers = Object.entries(customerStatsMap)
+      .map(([id, s]) => ({
+        id,
+        name: customers.find(c => c.id === id)?.name || 'Unknown',
+        totalSpent: s.totalSpent
+      }))
+      .sort((a, b) => b.totalSpent - a.totalSpent)
+      .slice(0, 5);
+
+    return { 
+      totalEarned, 
+      totalDebt, 
+      orderCount: orders.length, 
+      chartData, 
+      customerStats: selectedCustomer ? customerStatsMap[selectedCustomer.id] : null, 
+      topCustomers, 
+      debtAging,
+      customerBalances: customerStatsMap
+    };
+  }, [orders, selectedCustomer, customers]);
+
+  const filteredCustomers = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    const list = customers
+      .filter(c => c.name.toLowerCase().includes(query))
+      .map(customer => {
+        const balanceInfo = stats.customerBalances[customer.id] || { unpaidBalance: 0, oldestDebtTime: Infinity };
+        const unpaidBalance = balanceInfo.unpaidBalance;
+        const oldestDebtDays = balanceInfo.oldestDebtTime === Infinity ? 0 : Math.floor((Date.now() - balanceInfo.oldestDebtTime) / (1000 * 60 * 60 * 24));
         const hasDraft = drafts[customer.id] && drafts[customer.id].items.length > 0;
-
         return { ...customer, unpaidBalance, oldestDebtDays, hasDraft };
       });
 
-    // Sort: 1. Has active draft, 2. Unpaid balance (desc), 3. Name (asc)
     return list.sort((a, b) => {
       if (a.hasDraft && !b.hasDraft) return -1;
       if (!a.hasDraft && b.hasDraft) return 1;
       if (b.unpaidBalance !== a.unpaidBalance) return b.unpaidBalance - a.unpaidBalance;
       return a.name.localeCompare(b.name);
     });
-  }, [customers, searchQuery, orders, drafts]);
-
-  const stats = useMemo(() => {
-    const totalEarned = orders.reduce((sum, o) => sum + o.total, 0);
-    const totalDebt = orders.filter(o => o.status !== 'paid').reduce((sum, o) => sum + o.total, 0);
-    
-    // Chart data for last 7 days
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      return d.toISOString().split('T')[0];
-    }).reverse();
-
-    const chartData = last7Days.map(date => {
-      const dayOrders = orders.filter(o => o.createdAt?.toDate().toISOString().split('T')[0] === date);
-      return {
-        date: new Date(date).toLocaleDateString('en-LB', { weekday: 'short' }),
-        amount: dayOrders.reduce((sum, o) => sum + o.total, 0)
-      };
-    });
-
-    // Customer specific stats
-    const customerStats = selectedCustomer ? {
-      totalSpent: orders.filter(o => o.customerId === selectedCustomer.id).reduce((sum, o) => sum + o.total, 0),
-      orderCount: orders.filter(o => o.customerId === selectedCustomer.id).length,
-      lastOrder: orders.filter(o => o.customerId === selectedCustomer.id)[0]?.createdAt?.toDate()
-    } : null;
-
-    // Top Customers
-    const topCustomers = customers.map(c => ({
-      ...c,
-      totalSpent: orders.filter(o => o.customerId === c.id).reduce((sum, o) => sum + o.total, 0)
-    })).sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 5);
-
-    // Debt Aging
-    const unpaidOrders = orders.filter(o => o.status !== 'paid');
-    const debtAging = {
-      recent: unpaidOrders.filter(o => {
-        const days = Math.floor((Date.now() - (o.createdAt?.toDate().getTime() || Date.now())) / (1000 * 60 * 60 * 24));
-        return days <= 7;
-      }).reduce((sum, o) => sum + o.total, 0),
-      mid: unpaidOrders.filter(o => {
-        const days = Math.floor((Date.now() - (o.createdAt?.toDate().getTime() || Date.now())) / (1000 * 60 * 60 * 24));
-        return days > 7 && days <= 30;
-      }).reduce((sum, o) => sum + o.total, 0),
-      old: unpaidOrders.filter(o => {
-        const days = Math.floor((Date.now() - (o.createdAt?.toDate().getTime() || Date.now())) / (1000 * 60 * 60 * 24));
-        return days > 30;
-      }).reduce((sum, o) => sum + o.total, 0),
-    };
-
-    return { totalEarned, totalDebt, orderCount: orders.length, chartData, customerStats, topCustomers, debtAging };
-  }, [orders, selectedCustomer, customers]);
+  }, [customers, searchQuery, stats.customerBalances, drafts]);
 
   const filteredOrders = useMemo(() => {
     return orders.filter(o => {
@@ -642,17 +664,15 @@ export default function App() {
         <header className="bg-white border-b border-slate-200 sticky top-0 z-20 px-4 py-2.5">
           <div className="flex items-center justify-between">
             <div className="space-y-0">
-              <h1 className="text-lg font-black tracking-tighter text-slate-900">
-                {view === 'home' ? 'DeliveryHelp' : 
-                 view === 'stats' ? 'Statistics' :
-                 view === 'add-customer' ? (editingCustomer ? 'Edit Client' : 'New Client') : 
-                 view === 'customer-profile' ? 'Client Profile' :
-                 selectedCustomer?.name}
-              </h1>
               {view === 'home' && (
-                <p className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">
-                  WELCOME, {user?.displayName?.split(' ')[0] || 'USER'}
-                </p>
+                <div className="flex flex-col">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">
+                    {new Date().toLocaleDateString('en-LB', { weekday: 'long', month: 'short', day: 'numeric' })}
+                  </p>
+                  <h1 className="text-xl font-black tracking-tighter text-slate-900">
+                    Hello, {user?.displayName?.split(' ')[0] || 'User'}
+                  </h1>
+                </div>
               )}
             </div>
               {view !== 'home' && (
@@ -683,49 +703,73 @@ export default function App() {
               {view === 'home' && (
                 <div key="home" className="space-y-4">
                   {/* Summary Card */}
-                  <div className="bg-white rounded-[1.5rem] p-4 text-slate-900 shadow-lg shadow-slate-200/40 border border-slate-100">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="border-r border-slate-100 pr-3">
-                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Admin Outstanding</p>
-                        <p className="text-lg font-black text-red-500 tracking-tighter">LL {stats.totalDebt.toLocaleString()}</p>
+                  <div className="bg-slate-900 rounded-[2rem] p-6 text-white shadow-2xl shadow-slate-900/20 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+                    <div className="relative z-10 grid grid-cols-2 gap-6">
+                      <div className="border-r border-white/10 pr-4">
+                        <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">Total Clients</p>
+                        <p className="text-3xl font-black tracking-tighter">{customers.length}</p>
                       </div>
-                      <div className="pl-3">
-                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Clients</p>
-                        <p className="text-lg font-black text-slate-900 tracking-tighter">{customers.length}</p>
+                      <div className="pl-4">
+                        <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">Active Drafts</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-3xl font-black tracking-tighter text-emerald-400">
+                            {Object.values(drafts).filter((d: any) => d.items.length > 0).length}
+                          </p>
+                          <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Search & Add */}
-                  <div className="relative">
-                    <div className="relative">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                      <input 
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search clients..."
-                        className="w-full bg-white border-2 border-slate-100 rounded-[1.2rem] pl-10 pr-10 py-2.5 focus:outline-none focus:border-emerald-500 transition-all text-sm font-bold text-slate-900 shadow-sm"
-                      />
-                      {searchQuery && (
-                        <button 
-                          onClick={() => setSearchQuery('')}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600"
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                    </div>
+                  {/* Quick Actions */}
+                  <div className="grid grid-cols-2 gap-3">
                     <button 
                       onClick={() => {
                         setEditingCustomer(null);
                         setCustomerForm({ name: '', phone: '', address: '' });
                         setView('add-customer');
                       }}
-                      className="absolute -right-1 -top-5 bg-emerald-500 text-white p-3.5 rounded-[1.2rem] shadow-lg shadow-emerald-500/20 active:scale-90 z-10 hover:bg-emerald-600 transition-all"
+                      className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 active:scale-95 transition-all group"
                     >
-                      <Plus size={20} strokeWidth={4} />
+                      <div className="w-10 h-10 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                        <Plus size={20} strokeWidth={3} />
+                      </div>
+                      <span className="text-[11px] font-black text-slate-600 uppercase tracking-widest">New Client</span>
                     </button>
+                    <button 
+                      onClick={() => setView('stats')}
+                      className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 active:scale-95 transition-all group"
+                    >
+                      <div className="w-10 h-10 bg-blue-500/10 text-blue-500 rounded-xl flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                        <BarChart3 size={20} strokeWidth={3} />
+                      </div>
+                      <span className="text-[11px] font-black text-slate-600 uppercase tracking-widest">View Stats</span>
+                    </button>
+                  </div>
+
+                  {/* Search */}
+                  <div className="relative">
+                    <div className="relative group">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors">
+                        <Search size={18} strokeWidth={3} />
+                      </div>
+                      <input 
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search clients by name..."
+                        className="w-full bg-white border-2 border-slate-100 rounded-2xl pl-12 pr-10 py-3.5 focus:outline-none focus:border-emerald-500 transition-all text-sm font-bold text-slate-900 shadow-sm placeholder:text-slate-300"
+                      />
+                      {searchQuery && (
+                        <button 
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Customer List */}
@@ -742,43 +786,50 @@ export default function App() {
                           onClick={() => selectCustomer(customer)}
                           className="flex-1 cursor-pointer"
                         >
-                          <div className="flex justify-between items-start mb-1.5">
+                          <div className="flex justify-between items-start mb-2">
                             <div className="flex items-center gap-2">
-                              <p className="font-black text-base text-slate-900 leading-tight tracking-tight">{customer.name}</p>
+                              <p className="font-black text-lg text-slate-900 leading-tight tracking-tight">{customer.name}</p>
                               {customer.hasDraft && (
-                                <span className="bg-emerald-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse">
+                                <span className="bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter animate-pulse">
                                   Draft
                                 </span>
                               )}
                             </div>
                             <div className="flex items-center gap-1.5">
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  selectCustomer(customer);
-                                }}
-                                className="p-2.5 bg-emerald-500 text-white rounded-lg shadow-lg shadow-emerald-500/10 active:scale-90 transition-all"
-                                title="New Order"
-                              >
-                                <Plus size={14} strokeWidth={4} />
-                              </button>
+                              <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-300 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
+                                <ChevronRight size={18} strokeWidth={3} />
+                              </div>
                             </div>
                           </div>
+                          
                           <div className="flex items-center justify-between">
-                            {customer.unpaidBalance > 0 && (
-                              <div className="bg-red-500/10 text-red-500 px-3 py-1.5 rounded-lg">
-                                <span className="text-[12px] font-black uppercase tracking-widest">
-                                  LL {customer.unpaidBalance.toLocaleString()}
+                            <div className="flex gap-3">
+                              {customer.phone && (
+                                <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                                  <Phone size={10} /> {customer.phone}
                                 </span>
+                              )}
+                              {customer.unpaidBalance > 0 && (
+                                <span className="text-[11px] font-black text-red-400 flex items-center gap-1">
+                                  <Wallet size={10} /> {customer.oldestDebtDays}d
+                                </span>
+                              )}
+                            </div>
+                            {customer.unpaidBalance > 0 && (
+                              <div className="text-right">
+                                <p className="text-sm font-black text-red-500 tracking-tight">
+                                  {formatCurrency(customer.unpaidBalance)}
+                                </p>
                               </div>
                             )}
                           </div>
+                          
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
                               setConfirmDeleteId(customer.id);
                             }}
-                            className="absolute bottom-2 right-2 text-slate-200 hover:text-red-500 p-1 transition-all opacity-40 hover:opacity-100"
+                            className="absolute bottom-2 right-2 text-slate-200 hover:text-red-500 p-1 transition-all opacity-0 group-hover:opacity-100"
                           >
                             <Trash2 size={10} />
                           </button>
@@ -799,12 +850,17 @@ export default function App() {
 
             {view === 'stats' && (
               <div key="stats" className="space-y-4">
-                <div className="flex flex-col items-center justify-center py-2">
-                  <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-2">
-                    <Truck size={32} strokeWidth={2.5} />
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 text-center space-y-2">
+                  <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <AlertCircle size={32} strokeWidth={2.5} />
                   </div>
-                  <p className="text-[13px] font-black text-slate-500 uppercase tracking-widest">Performance Insights</p>
+                  <h3 className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Admin Outstanding</h3>
+                  <p className="text-3xl font-black text-red-500 tracking-tighter">{formatCurrency(stats.totalDebt)}</p>
+                  <p className="text-[11px] font-bold text-slate-400 leading-relaxed">
+                    This is the total amount currently owed by all clients.
+                  </p>
                 </div>
+
                 {/* Stats Summary */}
                 <div className="grid grid-cols-2 gap-3">
                   <motion.div 
