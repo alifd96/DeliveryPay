@@ -27,9 +27,9 @@ import {
   X,
   Check,
   MoreVertical,
+  Package,
   MessageCircle,
   TrendingUp,
-  Package,
   Copy,
   Filter,
   ArrowUpRight,
@@ -223,6 +223,55 @@ export default function App() {
   const [price, setPrice] = useState('');
   const [deliveryFee, setDeliveryFee] = useState('0');
   const [isListening, setIsListening] = useState(false);
+  const [drafts, setDrafts] = useState<Record<string, { items: ShopItem[], fee: string }>>({});
+
+  const saveCurrentToDraft = (customerId: string | undefined) => {
+    if (!customerId) return;
+    setDrafts(prev => ({
+      ...prev,
+      [customerId]: { items: currentItems, fee: deliveryFee }
+    }));
+  };
+
+  const selectCustomer = (customer: Customer) => {
+    if (selectedCustomer?.id === customer.id) {
+      setView('customer-profile');
+      return;
+    }
+
+    // Save current state to drafts for the PREVIOUS customer immediately
+    if (selectedCustomer) {
+      setDrafts(prev => ({
+        ...prev,
+        [selectedCustomer.id]: { items: [...currentItems], fee: deliveryFee }
+      }));
+    }
+    
+    // Load state for the NEW customer from the current drafts
+    const draft = drafts[customer.id] || { items: [], fee: '0' };
+    setCurrentItems([...draft.items]);
+    setDeliveryFee(draft.fee);
+    setShopName('');
+    setPrice('');
+    setSelectedCustomer(customer);
+    setView('customer-profile');
+  };
+
+  const resetOrderState = (customerId?: string) => {
+    setCurrentItems([]);
+    setShopName('');
+    setPrice('');
+    setDeliveryFee('0');
+    setVoiceError(null);
+    setIsListening(false);
+    if (customerId) {
+      setDrafts(prev => {
+        const newDrafts = { ...prev };
+        delete newDrafts[customerId];
+        return newDrafts;
+      });
+    }
+  };
 
   // --- Auth ---
 
@@ -264,11 +313,10 @@ export default function App() {
   }, [user]);
 
   useEffect(() => {
-    if (!user || !selectedCustomer) return;
+    if (!user) return;
 
     const q = query(
       collection(db, 'orders'),
-      where('customerId', '==', selectedCustomer.id),
       where('uid', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
@@ -281,7 +329,7 @@ export default function App() {
     });
 
     return unsubscribe;
-  }, [user, selectedCustomer]);
+  }, [user]);
 
   // --- Actions ---
 
@@ -313,6 +361,11 @@ export default function App() {
     try {
       await deleteDoc(doc(db, 'customers', id));
       setConfirmDeleteId(null);
+      setDrafts(prev => {
+        const newDrafts = { ...prev };
+        delete newDrafts[id];
+        return newDrafts;
+      });
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `customers/${id}`);
     }
@@ -347,8 +400,7 @@ export default function App() {
         uid: user.uid,
         createdAt: serverTimestamp()
       });
-      setCurrentItems([]);
-      setDeliveryFee('0');
+      resetOrderState(selectedCustomer.id);
       setView('history');
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'orders');
@@ -526,71 +578,79 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-white text-slate-900 font-sans pb-24">
+      <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-20">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 sticky top-0 z-20 px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {view !== 'home' && (
-              <button 
-                onClick={() => {
-                  setEditingCustomer(null);
-                  setSelectedCustomer(null);
-                  setView('home');
-                }}
-                className="p-2 hover:bg-slate-100 rounded-lg transition-colors active:scale-95"
-              >
-                <ArrowLeft size={20} className="text-slate-600" />
-              </button>
-            )}
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-slate-900">
+        <header className="bg-white border-b border-slate-200 sticky top-0 z-20 px-4 py-2">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <h1 className="text-lg font-bold tracking-tight text-slate-900">
                 {view === 'home' ? 'Clients' : 
                  view === 'stats' ? 'Statistics' :
                  view === 'add-customer' ? (editingCustomer ? 'Edit Client' : 'New Client') : 
                  view === 'customer-profile' ? 'Client Profile' :
                  selectedCustomer?.name}
               </h1>
-              {view === 'home' && <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Welcome back</p>}
+              {view === 'home' && (
+                <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">
+                  WELCOME, {user?.displayName?.split(' ')[0] || 'USER'}
+                </p>
+              )}
             </div>
+            {view !== 'home' && (
+              <button 
+                onClick={() => {
+                  saveCurrentToDraft(selectedCustomer?.id);
+                  setEditingCustomer(null);
+                  if (view === 'customer') {
+                    setView('customer-profile');
+                  } else {
+                    setView('home');
+                    setSelectedCustomer(null);
+                  }
+                }}
+                className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors active:scale-95 text-slate-600"
+              >
+                <ArrowLeft size={18} />
+              </button>
+            )}
           </div>
-          <div className="w-8 h-8" />
         </header>
 
-        <main className="max-w-xl mx-auto p-4">
+        <main className="max-w-xl mx-auto p-3">
           <div className="transition-all duration-200">
             {view === 'home' && (
-              <div key="home" className="space-y-4">
+              <div key="home" className="space-y-3">
                 {/* Summary Card */}
-                <div className="bg-slate-900 rounded-2xl p-5 text-white shadow-md relative overflow-hidden">
-                  <div className="relative z-10 flex justify-between items-end">
-                    <div>
-                      <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1">Total Outstanding</p>
-                      <p className="text-2xl font-bold">{formatCurrency(stats.totalDebt)}</p>
+                <div className="bg-white rounded-xl p-2 text-slate-900 shadow-sm border border-slate-200">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="border-r border-slate-100 pr-2">
+                      <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Admin Outstanding</p>
+                      <p className="text-sm font-bold">LL {stats.totalDebt.toLocaleString()}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Clients</p>
-                      <p className="text-lg font-bold">{customers.length}</p>
+                    <div className="pl-2">
+                      <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Total Clients</p>
+                      <p className="text-sm font-bold">{customers.length}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Search & Add */}
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <div className="relative">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={12} />
                     <input 
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search clients..."
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-10 py-3 focus:outline-none focus:border-emerald-500 transition-colors text-base"
+                      className="w-full bg-white border border-slate-200 rounded-lg pl-8 pr-8 py-1 focus:outline-none focus:border-emerald-500 transition-colors text-[10px] text-slate-900"
                     />
                     {searchQuery && (
                       <button 
                         onClick={() => setSearchQuery('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-300"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-500"
                       >
-                        <X size={16} />
+                        <X size={10} />
                       </button>
                     )}
                   </div>
@@ -600,98 +660,118 @@ export default function App() {
                       setCustomerForm({ name: '', phone: '', address: '' });
                       setView('add-customer');
                     }}
-                    className="bg-emerald-600 text-white p-3 rounded-xl shadow-sm active:scale-95"
+                    className="absolute -right-1 -top-4 bg-emerald-500 text-white p-2 rounded-full shadow-lg shadow-emerald-500/20 active:scale-95 z-10"
                   >
-                    <Plus size={24} strokeWidth={3} />
+                    <Plus size={16} strokeWidth={3} />
                   </button>
                 </div>
 
                 {/* Customer List */}
-                <div className="space-y-3">
+                <div className="space-y-2 pt-1">
                   {filteredCustomers.map(customer => (
                     <div
                       key={customer.id}
-                      className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between active:bg-slate-50 transition-colors"
+                      className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between active:bg-slate-50 transition-colors relative group"
                     >
                       <div 
-                        onClick={() => {
-                          setSelectedCustomer(customer);
-                          setView('customer');
-                        }}
-                        className="flex items-center gap-4 flex-1 cursor-pointer"
+                        onClick={() => selectCustomer(customer)}
+                        className="flex-1 cursor-pointer"
                       >
-                        <div className="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600">
-                          <User size={24} />
-                        </div>
-                        <div className="text-left">
-                          <p className="font-bold text-lg text-slate-800 leading-tight">{customer.name}</p>
-                          <div className="flex flex-col gap-0.5">
-                            {customer.unpaidBalance > 0 ? (
-                              <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">
-                                  Debt: {formatCurrency(customer.unpaidBalance)}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-                                Clear
-                              </span>
-                            )}
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="font-bold text-xs text-slate-900 leading-tight">{customer.name}</p>
+                          <div className="flex items-center gap-1">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedCustomer(customer);
+                                setView('customer');
+                              }}
+                              className="p-1.5 bg-emerald-500 text-white rounded-lg shadow-sm active:scale-90 transition-all"
+                              title="New Order"
+                            >
+                              <Plus size={10} strokeWidth={4} />
+                            </button>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmDeleteId(customer.id);
+                              }}
+                              className="text-red-400/30 hover:text-red-400 p-1"
+                            >
+                              <Trash2 size={12} />
+                            </button>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingCustomer(customer);
-                            setCustomerForm({ name: customer.name, phone: customer.phone || '', address: customer.address || '' });
-                            setView('add-customer');
-                          }}
-                          className="p-2 text-slate-400 hover:text-blue-600"
-                        >
-                          <Edit3 size={16} />
-                        </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConfirmDeleteId(customer.id);
-                          }}
-                          className="p-2 text-slate-400 hover:text-red-600"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center justify-between">
+                          {customer.unpaidBalance > 0 ? (
+                            <div className="bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded-md">
+                              <span className="text-[8px] font-bold uppercase tracking-widest">
+                                LL {customer.unpaidBalance.toLocaleString()}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded-md">
+                              <span className="text-[8px] font-bold uppercase tracking-widest">
+                                0 Clear
+                              </span>
+                            </div>
+                          )}
+                          <span className="text-[7px] font-medium text-slate-500">
+                            Last: {orders.filter(o => o.customerId === customer.id)[0]?.createdAt?.toDate().toISOString().split('T')[0] || '0000-00-00'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}
+                  {filteredCustomers.length === 0 && (
+                    <div className="text-center py-10 bg-white rounded-xl border border-slate-200">
+                      <img 
+                        src="https://img.icons8.com/ios-filled/100/000000/delivery-scooter.png" 
+                        alt="Delivery Logo" 
+                        className="w-12 h-12 mx-auto mb-2 opacity-10"
+                        referrerPolicy="no-referrer"
+                      />
+                      <p className="text-slate-500 font-bold text-xs">No clients found</p>
+                      <p className="text-slate-600 text-[9px] mt-0.5">Add your first client to get started</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             {view === 'stats' && (
-              <div key="stats" className="space-y-6">
+              <div key="stats" className="space-y-3">
+                <div className="flex flex-col items-center justify-center py-1">
+                  <img 
+                    src="https://img.icons8.com/ios-filled/100/000000/delivery-scooter.png" 
+                    alt="Delivery Logo" 
+                    className="w-10 h-10 mb-1 opacity-10"
+                    referrerPolicy="no-referrer"
+                  />
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Performance Insights</p>
+                </div>
                 {/* Stats Summary */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-emerald-600 p-5 rounded-2xl text-white shadow-sm">
-                    <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest mb-1">Total Earned</p>
-                    <p className="text-xl font-bold">{formatCurrency(stats.totalEarned)}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-emerald-600/20 border border-emerald-500/20 p-2 rounded-xl text-emerald-500 shadow-sm">
+                    <p className="text-[7px] font-bold opacity-80 uppercase tracking-widest mb-0.5">Total Earned</p>
+                    <p className="text-xs font-bold">{formatCurrency(stats.totalEarned)}</p>
                   </div>
-                  <div className="bg-red-600 p-5 rounded-2xl text-white shadow-sm">
-                    <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest mb-1">Total Debt</p>
-                    <p className="text-xl font-bold">{formatCurrency(stats.totalDebt)}</p>
+                  <div className="bg-red-600/20 border border-red-500/20 p-2 rounded-xl text-red-500 shadow-sm">
+                    <p className="text-[7px] font-bold opacity-80 uppercase tracking-widest mb-0.5">Total Debt</p>
+                    <p className="text-xs font-bold">{formatCurrency(stats.totalDebt)}</p>
                   </div>
                 </div>
 
                 {/* Sales Chart */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">7-Day Performance</h3>
-                    <div className="flex items-center gap-1 text-emerald-600 font-bold text-xs">
-                      <ArrowUpRight size={14} />
+                    <h3 className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">7-Day Performance</h3>
+                    <div className="flex items-center gap-1 text-emerald-500 font-bold text-[8px]">
+                      <ArrowUpRight size={8} />
                       <span>Live Stats</span>
                     </div>
                   </div>
-                  <div className="h-48 w-full">
+                  <div className="h-28 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={stats.chartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
@@ -699,15 +779,17 @@ export default function App() {
                           dataKey="date" 
                           axisLine={false} 
                           tickLine={false} 
-                          tick={{ fontSize: 10, fill: '#94A3B8' }} 
+                          tick={{ fontSize: 6, fill: '#94A3B8' }} 
                         />
                         <YAxis hide />
                         <Tooltip 
                           cursor={{ fill: '#F8FAFC' }}
-                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                          contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '6px', border: '1px solid #F1F5F9', padding: '4px' }}
+                          itemStyle={{ color: '#10B981', fontSize: '8px', padding: '0' }}
+                          labelStyle={{ color: '#64748B', fontSize: '8px', marginBottom: '2px' }}
                           formatter={(value: number) => [formatCurrency(value), 'Sales']}
                         />
-                        <Bar dataKey="amount" radius={[4, 4, 0, 0]} barSize={24}>
+                        <Bar dataKey="amount" radius={[2, 2, 0, 0]} barSize={12}>
                           {stats.chartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={index === stats.chartData.length - 1 ? '#10B981' : '#E2E8F0'} />
                           ))}
@@ -718,36 +800,36 @@ export default function App() {
                 </div>
 
                 {/* Extra Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
-                        <Package size={16} />
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <div className="w-4 h-4 bg-blue-500/10 text-blue-500 rounded flex items-center justify-center">
+                        <Package size={8} />
                       </div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Orders</p>
+                      <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Total Orders</p>
                     </div>
-                    <p className="text-xl font-bold text-slate-900">{stats.orderCount}</p>
+                    <p className="text-xs font-bold text-slate-900">{stats.orderCount}</p>
                   </div>
-                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
-                        <User size={16} />
+                  <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <div className="w-4 h-4 bg-amber-500/10 text-amber-500 rounded flex items-center justify-center">
+                        <User size={8} />
                       </div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Clients</p>
+                      <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Total Clients</p>
                     </div>
-                    <p className="text-xl font-bold text-slate-900">{customers.length}</p>
+                    <p className="text-xs font-bold text-slate-900">{customers.length}</p>
                   </div>
                 </div>
 
                 {/* Debt Aging */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest ml-1">Debt Aging</h3>
-                  <div className="space-y-3">
+                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                  <h3 className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Debt Aging</h3>
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-500">0 - 7 Days</span>
-                      <span className="text-xs font-bold text-emerald-600">{formatCurrency(stats.debtAging.recent)}</span>
+                      <span className="text-[8px] font-bold text-slate-400">0 - 7 Days</span>
+                      <span className="text-[8px] font-bold text-emerald-500">{formatCurrency(stats.debtAging.recent)}</span>
                     </div>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
                       <div 
                         className="bg-emerald-500 h-full" 
                         style={{ width: `${(stats.debtAging.recent / (stats.totalDebt || 1)) * 100}%` }} 
@@ -755,10 +837,10 @@ export default function App() {
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-500">8 - 30 Days</span>
-                      <span className="text-xs font-bold text-amber-600">{formatCurrency(stats.debtAging.mid)}</span>
+                      <span className="text-[8px] font-bold text-slate-400">8 - 30 Days</span>
+                      <span className="text-[8px] font-bold text-amber-500">{formatCurrency(stats.debtAging.mid)}</span>
                     </div>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
                       <div 
                         className="bg-amber-500 h-full" 
                         style={{ width: `${(stats.debtAging.mid / (stats.totalDebt || 1)) * 100}%` }} 
@@ -766,10 +848,10 @@ export default function App() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-500">30+ Days</span>
-                      <span className="text-xs font-bold text-red-600">{formatCurrency(stats.debtAging.old)}</span>
+                      <span className="text-[8px] font-bold text-slate-400">30+ Days</span>
+                      <span className="text-[8px] font-bold text-red-500">{formatCurrency(stats.debtAging.old)}</span>
                     </div>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
                       <div 
                         className="bg-red-500 h-full" 
                         style={{ width: `${(stats.debtAging.old / (stats.totalDebt || 1)) * 100}%` }} 
@@ -779,23 +861,30 @@ export default function App() {
                 </div>
 
                 {/* Top Clients */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest ml-1">Top Clients</h3>
-                  <div className="space-y-4">
+                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
+                  <h3 className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Top Clients</h3>
+                  <div className="space-y-1">
                     {stats.topCustomers.map((c, i) => (
-                      <div key={c.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${
-                            i === 0 ? 'bg-amber-100 text-amber-600' : 
-                            i === 1 ? 'bg-slate-100 text-slate-600' : 
-                            i === 2 ? 'bg-orange-100 text-orange-600' : 
-                            'bg-slate-50 text-slate-400'
+                      <div 
+                        key={c.id} 
+                        onClick={() => {
+                          const customer = customers.find(cust => cust.id === c.id);
+                          if (customer) selectCustomer(customer);
+                        }}
+                        className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <div className={`w-4 h-4 rounded flex items-center justify-center font-bold text-[8px] ${
+                            i === 0 ? 'bg-amber-500/20 text-amber-500' : 
+                            i === 1 ? 'bg-slate-500/20 text-slate-400' : 
+                            i === 2 ? 'bg-orange-500/20 text-orange-500' : 
+                            'bg-slate-100 text-slate-400'
                           }`}>
                             {i + 1}
                           </div>
-                          <span className="font-bold text-slate-700">{c.name}</span>
+                          <span className="font-bold text-slate-600 text-[10px]">{c.name}</span>
                         </div>
-                        <span className="font-bold text-slate-900">{formatCurrency(c.totalSpent)}</span>
+                        <span className="font-bold text-slate-900 text-[10px]">{formatCurrency(c.totalSpent)}</span>
                       </div>
                     ))}
                   </div>
@@ -804,45 +893,54 @@ export default function App() {
             )}
 
             {view === 'add-customer' && (
-              <div key="add-customer" className="space-y-6">
-                <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm space-y-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+              <div key="add-customer" className="space-y-3">
+                <div className="flex flex-col items-center justify-center py-1">
+                  <img 
+                    src="https://img.icons8.com/ios-filled/100/000000/delivery-scooter.png" 
+                    alt="Delivery Logo" 
+                    className="w-10 h-10 mb-1 opacity-10"
+                    referrerPolicy="no-referrer"
+                  />
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Customer Details</p>
+                </div>
+                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                  <div className="space-y-1.5">
+                    <div className="space-y-0.5">
+                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
                       <input 
                         type="text"
                         value={customerForm.name}
                         onChange={(e) => setCustomerForm({...customerForm, name: e.target.value})}
                         placeholder="Customer Name"
-                        className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-4 focus:ring-emerald-500/10 text-lg font-medium"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-emerald-500/20 text-[10px] font-medium text-slate-900 placeholder:text-slate-400"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
+                    <div className="space-y-0.5">
+                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
                       <input 
                         type="tel"
                         value={customerForm.phone}
                         onChange={(e) => setCustomerForm({...customerForm, phone: e.target.value})}
                         placeholder="e.g. 70123456"
-                        className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-4 focus:ring-emerald-500/10 text-lg font-medium"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-emerald-500/20 text-[10px] font-medium text-slate-900 placeholder:text-slate-400"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Address</label>
+                    <div className="space-y-0.5">
+                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Address</label>
                       <textarea 
                         value={customerForm.address}
                         onChange={(e) => setCustomerForm({...customerForm, address: e.target.value})}
                         placeholder="Delivery Address"
-                        rows={3}
-                        className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-4 focus:ring-emerald-500/10 text-lg font-medium"
+                        rows={1}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-emerald-500/20 text-[10px] font-medium text-slate-900 placeholder:text-slate-400"
                       />
                     </div>
                   </div>
                   <button 
                     onClick={saveCustomer}
-                    className="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black text-xl shadow-xl shadow-emerald-200 hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3"
+                    className="w-full bg-emerald-500 text-white py-2 rounded-xl font-black text-[10px] shadow-lg shadow-emerald-500/10 hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-1"
                   >
-                    <Check size={28} />
+                    <Check size={14} />
                     {editingCustomer ? 'Update Customer' : 'Save Customer'}
                   </button>
                 </div>
@@ -850,53 +948,62 @@ export default function App() {
             )}
 
             {view === 'customer-profile' && selectedCustomer && (
-              <div key="customer-profile" className="space-y-6">
+              <div key="customer-profile" className="space-y-3">
+                <div className="flex flex-col items-center justify-center py-1">
+                  <img 
+                    src="https://img.icons8.com/ios-filled/100/000000/delivery-scooter.png" 
+                    alt="Delivery Logo" 
+                    className="w-10 h-10 mb-1 opacity-10"
+                    referrerPolicy="no-referrer"
+                  />
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Client Profile</p>
+                </div>
                 {/* Profile Header */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-sm">
-                      <User size={32} />
+                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white shadow-sm">
+                      <User size={16} />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-slate-900">{selectedCustomer.name}</h2>
-                      <div className="flex flex-col gap-1 mt-1">
+                      <h2 className="text-sm font-bold text-slate-900 leading-tight">{selectedCustomer.name}</h2>
+                      <div className="flex flex-col gap-0.5 mt-0.5">
                         {selectedCustomer.phone && (
-                          <a href={`tel:${selectedCustomer.phone}`} className="text-sm font-bold text-emerald-600 flex items-center gap-2">
-                            <Phone size={14} /> {selectedCustomer.phone}
+                          <a href={`tel:${selectedCustomer.phone}`} className="text-[8px] font-bold text-emerald-500 flex items-center gap-1">
+                            <Phone size={7} /> {selectedCustomer.phone}
                           </a>
                         )}
                         {selectedCustomer.address && (
-                          <p className="text-sm font-medium text-slate-400 flex items-center gap-2">
-                            <MapPin size={14} /> {selectedCustomer.address}
+                          <p className="text-[8px] font-medium text-slate-400 flex items-center gap-1">
+                            <MapPin size={7} /> {selectedCustomer.address}
                           </p>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
-                    <div className="bg-slate-50 p-4 rounded-xl">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Spent</p>
-                      <p className="text-lg font-bold text-slate-900">{formatCurrency(stats.customerStats?.totalSpent || 0)}</p>
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                    <div className="bg-slate-50 p-1.5 rounded-lg">
+                      <p className="text-[6px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Total Spent</p>
+                      <p className="text-[9px] font-bold text-slate-900">{formatCurrency(stats.customerStats?.totalSpent || 0)}</p>
                     </div>
-                    <div className="bg-slate-50 p-4 rounded-xl">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Orders</p>
-                      <p className="text-lg font-bold text-slate-900">{stats.customerStats?.orderCount || 0}</p>
+                    <div className="bg-slate-50 p-1.5 rounded-lg">
+                      <p className="text-[6px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Orders</p>
+                      <p className="text-[9px] font-bold text-slate-900">{stats.customerStats?.orderCount || 0}</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex gap-2">
                     <button 
                       onClick={() => setView('customer')}
-                      className="flex-1 bg-emerald-500 text-white py-4 rounded-xl font-bold text-lg shadow-sm hover:bg-emerald-600 transition-colors flex items-center justify-center gap-3"
+                      className="flex-1 bg-emerald-500 text-white py-1.5 rounded-xl font-bold text-[9px] shadow-sm hover:bg-emerald-600 transition-colors flex items-center justify-center gap-1"
                     >
-                      <Plus size={24} />
+                      <Plus size={12} />
                       New Order
                     </button>
                     {stats.customerStats?.totalSpent && stats.customerStats.totalSpent > 0 && (
                       <button 
                         onClick={() => setConfirmMarkPaid(true)}
-                        className="bg-slate-900 text-white px-6 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-black transition-colors"
+                        className="bg-slate-100 text-slate-600 px-2 rounded-xl font-bold text-[7px] uppercase tracking-widest hover:bg-slate-200 transition-colors"
                       >
                         Clear Debt
                       </button>
@@ -905,152 +1012,180 @@ export default function App() {
                 </div>
 
                 {/* Recent Orders for this customer */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest ml-1">Recent Activity</h3>
+                <div className="space-y-2">
+                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Recent Activity</h3>
                   {orders.filter(o => o.customerId === selectedCustomer.id).slice(0, 5).map(order => (
-                    <div key={order.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                    <div key={order.id} className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                       <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase">
+                        <p className="text-[8px] font-bold text-slate-500 uppercase">
                           {order.createdAt?.toDate().toLocaleDateString('en-LB', { month: 'short', day: 'numeric' })}
                         </p>
-                        <p className="font-bold text-lg text-slate-900">{formatCurrency(order.total)}</p>
+                        <p className="font-bold text-sm text-slate-900">{formatCurrency(order.total)}</p>
                       </div>
-                      <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                        order.status === 'paid' ? 'bg-emerald-50 text-emerald-600' : 
-                        order.status === 'delivered' ? 'bg-blue-50 text-blue-600' : 
-                        'bg-amber-50 text-amber-600'
+                      <div className={`px-1.5 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest ${
+                        order.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 
+                        order.status === 'delivered' ? 'bg-blue-500/10 text-blue-500' : 
+                        'bg-amber-500/10 text-amber-500'
                       }`}>
                         {order.status}
                       </div>
                     </div>
                   ))}
                   {orders.filter(o => o.customerId === selectedCustomer.id).length === 0 && (
-                    <p className="text-center py-8 text-slate-400 font-bold italic">No orders yet</p>
+                    <p className="text-center py-4 text-slate-500 font-bold italic text-[10px]">No orders yet</p>
                   )}
                 </div>
               </div>
             )}
 
-            {view === 'customer' && (
-              <div key="customer" className="space-y-6">
-                <div className="bg-emerald-600 p-6 rounded-2xl text-white shadow-sm relative overflow-hidden">
-                  <p className="text-emerald-100 text-sm font-bold uppercase tracking-widest mb-1 opacity-80">Current Total</p>
-                  <h2 className="text-3xl font-bold tracking-tight">{formatCurrency(currentTotal)}</h2>
+            {view === 'customer' && selectedCustomer && (
+              <div key="customer" className="space-y-3">
+                <div className="flex flex-col items-center justify-center py-1">
+                  <img 
+                    src="https://img.icons8.com/ios-filled/100/000000/delivery-scooter.png" 
+                    alt="Delivery Logo" 
+                    className="w-10 h-10 mb-1 opacity-10"
+                    referrerPolicy="no-referrer"
+                  />
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">New Order</p>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6">
-                  <div className="space-y-5">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Shop / Mahal</label>
-                      <div className="relative flex gap-2">
-                        <div className="relative flex-1">
-                          <Store className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                          <input 
-                            type="text"
-                            value={shopName}
-                            onChange={(e) => setShopName(e.target.value)}
-                            placeholder="e.g. Supermarket"
-                            className="w-full bg-slate-50 border-none rounded-xl pl-12 pr-6 py-4 focus:ring-2 focus:ring-emerald-500/20 text-lg font-medium"
-                          />
-                        </div>
+                {/* Quick Categories */}
+                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                  <div className="flex items-center justify-between ml-1">
+                    <h3 className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Quick Categories</h3>
+                    <span className="text-[7px] font-bold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-md">SELECT SHOP</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[
+                      { name: 'Supermarket', icon: <Store size={14} />, color: 'bg-blue-500' },
+                      { name: 'Pharmacy', icon: <Plus size={14} />, color: 'bg-red-500' },
+                      { name: 'Bakery', icon: <Package size={14} />, color: 'bg-amber-500' },
+                      { name: 'Butcher', icon: <Package size={14} />, color: 'bg-rose-500' },
+                      { name: 'Roastery', icon: <Package size={14} />, color: 'bg-orange-500' },
+                      { name: 'Vegetables', icon: <Package size={14} />, color: 'bg-emerald-500' },
+                      { name: 'Restaurant', icon: <Store size={14} />, color: 'bg-indigo-500' },
+                      { name: 'Other', icon: <MoreVertical size={14} />, color: 'bg-slate-500' }
+                    ].map((cat) => (
+                      <button
+                        key={cat.name}
+                        onClick={() => setShopName(cat.name)}
+                        className={`flex flex-col items-center justify-center p-2.5 rounded-xl border transition-all active:scale-95 ${
+                          shopName === cat.name 
+                            ? `${cat.color} border-transparent text-white shadow-lg shadow-${cat.color.split('-')[1]}-500/30` 
+                            : 'bg-slate-50 border-slate-100 text-slate-600 hover:border-emerald-200'
+                        }`}
+                      >
+                        {cat.icon}
+                        <span className="text-[7px] font-bold mt-1.5 uppercase tracking-tighter">{cat.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Add Item Form */}
+                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-0.5">
+                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Shop Name</label>
+                      <div className="relative">
+                        <input 
+                          type="text"
+                          value={shopName}
+                          onChange={(e) => setShopName(e.target.value)}
+                          placeholder="e.g. Supermarket"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-2 pr-8 py-1.5 text-[10px] font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500/20"
+                        />
                         <button 
                           onClick={startVoiceCapture}
-                          className={`p-4 rounded-xl transition-colors ${isListening ? 'bg-red-500 text-white' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
+                          className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-md transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-emerald-500'}`}
                         >
-                          {isListening ? <Volume2 size={24} /> : <Mic size={24} />}
+                          <Mic size={12} />
                         </button>
                       </div>
-                      {voiceError && (
-                        <div className="flex items-center gap-2 text-red-500 text-[10px] font-bold uppercase tracking-widest mt-2 bg-red-50 p-3 rounded-xl">
-                          <AlertCircle size={14} />
-                          {voiceError}
-                          <button onClick={() => setVoiceError(null)} className="ml-auto">
-                            <X size={14} />
-                          </button>
-                        </div>
-                      )}
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {['Supermarket', 'Pharmacy', 'Bakery', 'Butcher', 'Roastery'].map(shop => (
-                          <button
-                            key={shop}
-                            onClick={() => setShopName(shop)}
-                            className="px-3 py-1.5 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-600 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
-                          >
-                            {shop}
-                          </button>
-                        ))}
-                      </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Price (L.L.)</label>
-                        <input 
-                          type="number"
-                          value={price}
-                          onChange={(e) => setPrice(e.target.value)}
-                          placeholder="0"
-                          className="w-full bg-slate-50 border-none rounded-xl px-6 py-4 focus:ring-2 focus:ring-emerald-500/20 text-lg font-medium"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Delivery Fee</label>
-                        <input 
-                          type="number"
-                          value={deliveryFee}
-                          onChange={(e) => setDeliveryFee(e.target.value)}
-                          placeholder="0"
-                          className="w-full bg-slate-50 border-none rounded-xl px-6 py-4 focus:ring-2 focus:ring-emerald-500/20 text-lg font-medium"
-                        />
-                      </div>
+                    <div className="space-y-0.5">
+                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Price (L.L.)</label>
+                      <input 
+                        type="number"
+                        inputMode="numeric"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        placeholder="0"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500/20"
+                      />
                     </div>
                   </div>
                   <button 
                     onClick={addItemToOrder}
-                    className="w-full bg-slate-900 text-white py-5 rounded-xl font-bold text-lg hover:bg-black transition-colors flex items-center justify-center gap-3 shadow-sm"
+                    disabled={!shopName || !price}
+                    className="w-full bg-slate-900 text-white py-2 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 disabled:active:scale-100 active:scale-95 transition-all shadow-lg shadow-slate-900/10"
                   >
-                    <Plus size={24} />
-                    Add to List
+                    <Plus size={14} strokeWidth={3} />
+                    Add to Bill
                   </button>
                 </div>
 
-                {/* Current Order Items */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between ml-1">
+                {/* Delivery Fee */}
+                <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <ReceiptText size={18} className="text-emerald-500" />
-                      <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Items Detail</h3>
+                      <div className="w-6 h-6 bg-emerald-500/10 text-emerald-500 rounded-lg flex items-center justify-center">
+                        <Calculator size={12} />
+                      </div>
+                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Delivery Fee</label>
+                    </div>
+                    <div className="relative w-24">
+                      <input 
+                        type="number"
+                        inputMode="numeric"
+                        value={deliveryFee}
+                        onChange={(e) => setDeliveryFee(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-2 pr-6 py-1 text-[10px] font-bold text-slate-900 text-right focus:ring-2 focus:ring-emerald-500/20"
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[7px] font-bold text-slate-400">LL</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Current Order Items */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between ml-1">
+                    <div className="flex items-center gap-1.5">
+                      <ReceiptText size={16} className="text-emerald-500" />
+                      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Items Detail</h3>
                     </div>
                     {currentItems.length > 0 && (
                       <button 
                         onClick={() => setCurrentItems([])}
-                        className="text-[10px] font-bold text-red-500 uppercase tracking-widest flex items-center gap-1 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
+                        className="text-[8px] font-bold text-red-500 uppercase tracking-widest flex items-center gap-1 hover:bg-red-500/10 px-1.5 py-0.5 rounded-lg transition-colors"
                       >
-                        <RotateCcw size={12} /> Clear All
+                        <RotateCcw size={10} /> Clear All
                       </button>
                     )}
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {currentItems.map((item, index) => (
                       <div 
                         key={index}
-                        className="bg-white p-4 rounded-xl border border-slate-100 flex items-center justify-between shadow-sm"
+                        className="bg-white p-1.5 rounded-xl border border-slate-200 flex items-center justify-between shadow-sm"
                       >
                         <div>
-                          <p className="font-bold text-lg text-slate-800">{item.shop}</p>
-                          <p className="text-emerald-600 font-bold">{formatCurrency(item.price)}</p>
+                          <p className="font-bold text-sm text-slate-900">{item.shop}</p>
+                          <p className="text-emerald-500 font-bold text-xs">{formatCurrency(item.price)}</p>
                         </div>
                         <button 
                           onClick={() => removeItemFromOrder(index)}
-                          className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                         >
-                          <Trash2 size={20} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     ))}
                   </div>
                   {currentItems.length === 0 && (
-                    <div className="text-center py-12 bg-slate-100/50 rounded-[2rem] border-2 border-dashed border-slate-200">
-                      <p className="text-slate-400 font-bold">No items added yet</p>
+                    <div className="text-center py-6 bg-white rounded-2xl border border-dashed border-slate-200">
+                      <p className="text-slate-400 font-bold text-[10px]">No items added yet</p>
                     </div>
                   )}
                 </div>
@@ -1058,9 +1193,9 @@ export default function App() {
                 {currentItems.length > 0 && (
                   <button 
                     onClick={submitOrder}
-                    className="w-full bg-emerald-500 text-white py-5 rounded-[2rem] font-black text-xl shadow-xl shadow-emerald-200 hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3"
+                    className="w-full bg-emerald-500 text-white py-1.5 rounded-2xl font-black text-sm shadow-xl shadow-emerald-500/10 hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <CheckCircle2 size={28} />
+                    <CheckCircle2 size={16} />
                     Complete Order
                   </button>
                 )}
@@ -1068,37 +1203,52 @@ export default function App() {
             )}
 
             {view === 'history' && (
-              <div key="history" className="space-y-8">
-                <div className="space-y-4">
+              <div key="history" className="space-y-4">
+                <div className="flex flex-col items-center justify-center py-1">
+                  <img 
+                    src="https://img.icons8.com/ios-filled/100/000000/delivery-scooter.png" 
+                    alt="Delivery Logo" 
+                    className="w-10 h-10 mb-1 opacity-20"
+                    referrerPolicy="no-referrer"
+                  />
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Past Deliveries</p>
+                </div>
+                <div className="space-y-2.5">
                   <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2">
-                      <History size={20} className="text-emerald-500" />
-                      <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Order History</h3>
+                    <div className="flex items-center gap-1.5">
+                      <History size={14} className="text-emerald-500" />
+                      <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Order History</h3>
                     </div>
                     <button 
-                      onClick={() => setView('customer')}
-                      className="bg-emerald-100 text-emerald-600 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider hover:bg-emerald-200 transition-all"
+                      onClick={() => {
+                        if (selectedCustomer) {
+                          setView('customer');
+                        } else {
+                          setView('home');
+                        }
+                      }}
+                      className="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded-lg font-black text-[9px] uppercase tracking-wider hover:bg-emerald-500/20 transition-all"
                     >
                       + New
                     </button>
                   </div>
 
                   {/* History Search & Filter */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5">
                     <div className="relative flex-1">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
                       <input 
                         type="text"
                         value={historySearchQuery}
                         onChange={(e) => setHistorySearchQuery(e.target.value)}
                         placeholder="Search orders..."
-                        className="w-full bg-white border border-slate-100 rounded-2xl pl-11 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 shadow-sm text-sm"
+                        className="w-full bg-white border border-slate-200 rounded-xl pl-8 pr-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 shadow-sm text-[11px] text-slate-900 placeholder:text-slate-400"
                       />
                     </div>
                     <select 
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value as any)}
-                      className="bg-white border border-slate-100 rounded-2xl px-4 py-3 text-xs font-bold text-slate-600 focus:outline-none shadow-sm"
+                      className="bg-white border border-slate-200 rounded-xl px-2 py-1.5 text-[9px] font-bold text-slate-500 focus:outline-none shadow-sm"
                     >
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>
@@ -1108,95 +1258,95 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-3 pb-20">
                   {filteredOrders.map(order => (
-                    <div key={order.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/30 space-y-5 group">
+                    <div key={order.id} className="bg-white p-2 rounded-2xl border border-slate-200 shadow-sm space-y-2 group">
                       <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-3 rounded-xl ${
-                            order.status === 'paid' ? 'bg-emerald-50 text-emerald-500' : 
-                            order.status === 'delivered' ? 'bg-blue-50 text-blue-500' : 
-                            'bg-amber-50 text-amber-500'
+                        <div className="flex items-center gap-2">
+                          <div className={`p-1 rounded-lg ${
+                            order.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 
+                            order.status === 'delivered' ? 'bg-blue-500/10 text-blue-500' : 
+                            'bg-amber-500/10 text-amber-500'
                           }`}>
-                            {order.status === 'paid' ? <CheckCircle size={20} /> : 
-                             order.status === 'delivered' ? <Package size={20} /> : 
-                             <Clock size={20} />}
+                            {order.status === 'paid' ? <CheckCircle size={12} /> : 
+                             order.status === 'delivered' ? <Package size={12} /> : 
+                             <Clock size={12} />}
                           </div>
                           <div>
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter flex items-center gap-2">
+                            <p className="text-[7px] text-slate-400 font-bold uppercase tracking-tighter flex items-center gap-1">
                               {order.createdAt?.toDate().toLocaleDateString('en-LB', { month: 'short', day: 'numeric', year: 'numeric' })}
-                              <span className="w-1 h-1 bg-slate-300 rounded-full" />
+                              <span className="w-1 h-1 bg-slate-200 rounded-full" />
                               {order.customerName}
                             </p>
-                            <p className="text-3xl font-black text-slate-900 tracking-tighter">{formatCurrency(order.total)}</p>
+                            <p className="text-base font-black text-slate-900 tracking-tighter">{formatCurrency(order.total)}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-0.5">
                           <button 
                             onClick={() => shareToWhatsApp(order)}
-                            className="p-2 text-emerald-500 hover:bg-emerald-50 rounded-xl transition-all"
+                            className="p-1 text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all"
                             title="Share to WhatsApp"
                           >
-                            <MessageCircle size={18} />
+                            <MessageCircle size={14} />
                           </button>
                           <button 
                             onClick={() => copyToClipboard(order)}
-                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
+                            className="p-1 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
                             title="Copy to Clipboard"
                           >
-                            <Copy size={18} />
+                            <Copy size={14} />
                           </button>
                           <button 
                             onClick={() => setConfirmDeleteOrderId(order.id)}
-                            className="p-2 text-slate-200 hover:text-red-500 transition-colors"
+                            className="p-1 text-slate-400 hover:text-red-500 transition-colors"
                           >
-                            <Trash2 size={18} />
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </div>
                       
-                  <div className="bg-slate-50/50 p-4 rounded-2xl space-y-3">
-                        <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                          <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-1">
-                            <Clock size={10} /> {order.createdAt?.toDate().toLocaleString('en-LB', { dateStyle: 'short', timeStyle: 'short' })}
+                      <div className="bg-slate-50 p-1.5 rounded-xl space-y-1">
+                        <div className="flex justify-between items-center pb-0.5 border-b border-slate-100">
+                          <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                            <Clock size={7} /> {order.createdAt?.toDate().toLocaleString('en-LB', { dateStyle: 'short', timeStyle: 'short' })}
                           </span>
-                          <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Order ID: {order.id.slice(-4)}</span>
+                          <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">ID: {order.id.slice(-4)}</span>
                         </div>
                         {order.items.map((item, i) => (
-                          <div key={i} className="flex justify-between text-sm items-center">
+                          <div key={i} className="flex justify-between text-[9px] items-center">
                             <span className="text-slate-500 font-medium">{item.shop}</span>
-                            <span className="font-black text-slate-800">{formatCurrency(item.price)}</span>
+                            <span className="font-black text-slate-900">{formatCurrency(item.price)}</span>
                           </div>
                         ))}
-                        <div className="pt-2 border-t border-slate-200 flex justify-between text-sm items-center">
-                          <span className="text-slate-400 font-bold uppercase text-[10px]">Delivery Fee</span>
-                          <span className="font-black text-emerald-600">{formatCurrency(order.deliveryFee)}</span>
+                        <div className="pt-0.5 border-t border-slate-100 flex justify-between text-[9px] items-center">
+                          <span className="text-slate-400 font-bold uppercase text-[7px]">Delivery Fee</span>
+                          <span className="font-black text-emerald-500">{formatCurrency(order.deliveryFee)}</span>
                         </div>
                       </div>
 
                       {/* Status Update Actions */}
-                      <div className="flex gap-2 pt-2">
+                      <div className="flex gap-1.5 pt-0.5">
                         {order.status === 'pending' && (
                           <button 
                             onClick={() => updateOrderStatus(order.id, 'delivered')}
-                            className="flex-1 bg-blue-500 text-white py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
+                            className="flex-1 bg-blue-500 text-white py-1 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-1"
                           >
-                            <Package size={14} />
+                            <Package size={10} />
                             Mark Delivered
                           </button>
                         )}
                         {order.status === 'delivered' && (
                           <button 
                             onClick={() => updateOrderStatus(order.id, 'paid')}
-                            className="flex-1 bg-emerald-500 text-white py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center gap-2"
+                            className="flex-1 bg-emerald-500 text-white py-1 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center gap-1"
                           >
-                            <CreditCard size={14} />
+                            <CreditCard size={10} />
                             Mark Paid
                           </button>
                         )}
                         {order.status === 'paid' && (
-                          <div className="flex-1 bg-emerald-50 text-emerald-600 py-2 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-emerald-100">
-                            <CheckCircle size={14} />
+                          <div className="flex-1 bg-emerald-500/10 text-emerald-500 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1 border border-emerald-500/20">
+                            <CheckCircle size={10} />
                             Payment Received
                           </div>
                         )}
@@ -1204,9 +1354,14 @@ export default function App() {
                     </div>
                   ))}
                   {filteredOrders.length === 0 && (
-                    <div className="text-center py-20 bg-white rounded-[2rem] border border-slate-100">
-                      <History size={48} className="mx-auto text-slate-200 mb-4" />
-                      <p className="text-slate-400 font-bold">No orders found</p>
+                    <div className="text-center py-12 bg-white rounded-2xl border border-slate-200">
+                      <img 
+                        src="https://img.icons8.com/ios-filled/100/000000/delivery-scooter.png" 
+                        alt="Delivery Logo" 
+                        className="w-16 h-16 mx-auto mb-3 opacity-10 grayscale"
+                        referrerPolicy="no-referrer"
+                      />
+                      <p className="text-slate-400 font-bold text-sm">No orders found</p>
                     </div>
                   )}
                 </div>
@@ -1217,27 +1372,39 @@ export default function App() {
 
         {/* Bottom Nav */}
         {user && (
-          <nav className="fixed bottom-6 left-6 right-6 bg-slate-900/90 backdrop-blur-lg rounded-[2.5rem] p-3 flex justify-around items-center shadow-2xl z-30">
+          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-0.5 flex justify-around items-center z-30 shadow-lg">
             <button 
-              onClick={() => setView('home')}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-2xl transition-all ${view === 'home' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/40' : 'text-slate-400'}`}
+              onClick={() => {
+                saveCurrentToDraft(selectedCustomer?.id);
+                setView('home');
+              }}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-0.5 rounded-lg transition-all ${view === 'home' ? 'text-emerald-500' : 'text-slate-400'}`}
             >
-              <User size={24} strokeWidth={view === 'home' ? 3 : 2} />
-              <span className="text-[10px] font-black uppercase tracking-widest">Clients</span>
+              <User size={18} strokeWidth={view === 'home' ? 3 : 2} />
+              <span className="text-[8px] font-bold uppercase tracking-widest">Clients</span>
+              {view === 'home' && <div className="w-1 h-1 bg-emerald-500 rounded-full" />}
             </button>
             <button 
-              onClick={() => setView('stats')}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-2xl transition-all ${view === 'stats' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/40' : 'text-slate-400'}`}
+              onClick={() => {
+                saveCurrentToDraft(selectedCustomer?.id);
+                setView('stats');
+              }}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-0.5 rounded-lg transition-all ${view === 'stats' ? 'text-emerald-500' : 'text-slate-400'}`}
             >
-              <TrendingUp size={24} strokeWidth={view === 'stats' ? 3 : 2} />
-              <span className="text-[10px] font-black uppercase tracking-widest">Stats</span>
+              <TrendingUp size={18} strokeWidth={view === 'stats' ? 3 : 2} />
+              <span className="text-[8px] font-bold uppercase tracking-widest">Stats</span>
+              {view === 'stats' && <div className="w-1 h-1 bg-emerald-500 rounded-full" />}
             </button>
             <button 
-              onClick={() => setView('history')}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-2xl transition-all ${view === 'history' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/40' : 'text-slate-400'}`}
+              onClick={() => {
+                saveCurrentToDraft(selectedCustomer?.id);
+                setView('history');
+              }}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-0.5 rounded-lg transition-all ${view === 'history' ? 'text-emerald-500' : 'text-slate-400'}`}
             >
-              <History size={24} strokeWidth={view === 'history' ? 3 : 2} />
-              <span className="text-[10px] font-black uppercase tracking-widest">History</span>
+              <History size={18} strokeWidth={view === 'history' ? 3 : 2} />
+              <span className="text-[8px] font-bold uppercase tracking-widest">History</span>
+              {view === 'history' && <div className="w-1 h-1 bg-emerald-500 rounded-full" />}
             </button>
           </nav>
         )}
@@ -1247,10 +1414,10 @@ export default function App() {
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
             <div 
               onClick={() => setConfirmDeleteId(null)}
-              className="absolute inset-0 bg-slate-900/60"
+              className="absolute inset-0 bg-black/80"
             />
-            <div className="bg-white w-full max-w-sm rounded-2xl p-8 relative z-10 shadow-xl border border-slate-100">
-              <div className="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mb-6">
+            <div className="bg-white w-full max-w-sm rounded-2xl p-8 relative z-10 shadow-2xl border border-slate-200">
+              <div className="bg-red-500/10 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mb-6">
                 <Trash2 size={32} />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Delete Client?</h3>
@@ -1279,10 +1446,10 @@ export default function App() {
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
             <div 
               onClick={() => setConfirmDeleteOrderId(null)}
-              className="absolute inset-0 bg-slate-900/60"
+              className="absolute inset-0 bg-black/80"
             />
-            <div className="bg-white w-full max-w-sm rounded-2xl p-8 relative z-10 shadow-xl border border-slate-100">
-              <div className="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mb-6">
+            <div className="bg-white w-full max-w-sm rounded-2xl p-8 relative z-10 shadow-2xl border border-slate-200">
+              <div className="bg-red-500/10 w-16 h-16 rounded-2xl flex items-center justify-center text-red-500 mb-6">
                 <Trash2 size={32} />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Delete Order?</h3>
@@ -1311,10 +1478,10 @@ export default function App() {
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
             <div 
               onClick={() => setConfirmMarkPaid(false)}
-              className="absolute inset-0 bg-slate-900/60"
+              className="absolute inset-0 bg-black/80"
             />
-            <div className="bg-white w-full max-w-sm rounded-2xl p-8 relative z-10 shadow-xl border border-slate-100">
-              <div className="bg-emerald-50 w-16 h-16 rounded-2xl flex items-center justify-center text-emerald-500 mb-6">
+            <div className="bg-white w-full max-w-sm rounded-2xl p-8 relative z-10 shadow-2xl border border-slate-200">
+              <div className="bg-emerald-500/10 w-16 h-16 rounded-2xl flex items-center justify-center text-emerald-500 mb-6">
                 <CheckCircle size={32} />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Clear All Debt?</h3>
